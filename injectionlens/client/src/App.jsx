@@ -19,6 +19,8 @@ const SIGNAL_LABEL = {
   'reader-excludes': 'Excluded by Readability',
   'quoted-context': 'Quoted/educational context',
   'ua-cloaking': 'UA cloaking detected',
+  'decoded-invisible-text': 'Decoded invisible text',
+  'addressed-to-ai': 'Addressed to AI',
 }
 
 export default function App() {
@@ -154,6 +156,13 @@ export default function App() {
                     </span>
                   </div>
                   <p className="excerpt">“{f.excerpt}”</p>
+                  {((f.intents && f.intents.length) || f.addressedToAI || f.discounted) && (
+                    <div className="finding-chips">
+                      {(f.intents || []).map((it) => <span key={it} className="intent-chip">{it}</span>)}
+                      {f.addressedToAI && <span className="meta-chip">addressed to AI</span>}
+                      {f.discounted && <span className="meta-chip">discounted: quoted in visible code</span>}
+                    </div>
+                  )}
                   <div className="ai-profiles">
                     ingested by: {f.aiProfiles.map((p) => <code key={p}>{p}</code>)}
                   </div>

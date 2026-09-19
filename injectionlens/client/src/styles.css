@@ -51,6 +51,9 @@ select, input.url-input { background: #0d1117; color: var(--text); border: 1px s
 .vis { margin-left: auto; font-size: .75rem; }
 .v-yes { color: #69db7c; } .v-no { color: #ff7b72; }
 .excerpt { margin: .25rem 0; font-size: .85rem; line-height: 1.5; color: #c9d1d9; font-style: italic; }
+.finding-chips { display: flex; gap: .3rem; flex-wrap: wrap; margin: .35rem 0 .1rem; }
+.intent-chip { background: rgba(255, 143, 61, .14); border: 1px solid rgba(255, 143, 61, .5); color: #ffb87a; border-radius: 999px; padding: .08rem .55rem; font-size: .7rem; font-family: ui-monospace, monospace; }
+.meta-chip { background: rgba(88, 166, 255, .12); border: 1px solid rgba(88, 166, 255, .45); color: #9ecbff; border-radius: 999px; padding: .08rem .55rem; font-size: .7rem; }
 .ai-profiles { font-size: .74rem; color: var(--muted); margin: .3rem 0; }
 .ai-profiles code { background: #0d1117; border: 1px solid var(--border); border-radius: 4px; padding: 0 .35rem; margin-right: .3rem; }
 .signals { margin: .4rem 0 0; padding-left: 1.1rem; font-size: .78rem; color: #c9d1d9; }
