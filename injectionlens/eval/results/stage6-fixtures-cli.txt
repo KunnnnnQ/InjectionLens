@@ -1,0 +1,23 @@
+$ node scripts/run-fixtures.js --json eval/results/stage6-fixtures.json
+(exit code: 0)
+
+InjectionLens - Step 6 replica fixture runner
+manifest: C:\Users\kunqi\Kun\GitHub-Portfolio\00-INBOX\InjectionLens-step6-runner\injectionlens\server\fixtures\replicas.manifest.json (sha256 c4053b6844b3aad2...)
+fixtures root: C:\Users\kunqi\Kun\GitHub-Portfolio\00-INBOX\InjectionLens-step6-runner\injectionlens\server\fixtures
+fixture server: http://127.0.0.1:52744 (ephemeral, loopback only, closed=true)
+chrome: C:\Program Files\Google\Chrome\Application\chrome.exe
+external analysis: disabled (allowedHosts = [])
+
+PASS unit42-scam-ad-review [decision-agent] expected >=high observed=high evidence 5/5 intents 1/1 pipelines 3/3 6055ms
+PASS forcepoint-5000-payment [browser-agent] expected >=high observed=critical evidence 5/5 intents 1/1 pipelines 4/4 6010ms
+PASS forcepoint-rm-rf [coding-agent] expected >=critical observed=critical evidence 5/5 intents 1/1 pipelines 4/4 6514ms
+PASS unit42-offscreen-hiring [decision-agent] expected >=high observed=high evidence 5/5 intents 1/1 pipelines 4/4 6597ms
+PASS brave-comet-spoiler [browser-agent] expected >=high observed=high evidence 3/3 intents 2/2 pipelines 3/3 6142ms
+PASS splx-chatgpt-user-cloaking [summary-only] expected >=high observed=high evidence 3/3 intents 1/1 pipelines 3/3 5768ms
+SKIPPED msft-ai-summary-link [summary-only] expected <=low observed=info evidence 0/0 intents 0/0 pipelines 0/0 5442ms
+     skipped: known-gap - ai-link-prompt-not-ingested: Link-prompt extraction is Human Step 8 P1 work and is not implemented in Step 6. The product stores the assistant URL as an attribute value but never decodes the query parameter into an instruction, so the pre-filled prompt is not analysed.
+PASS arxiv-content-protection [summary-only] expected <=low observed=low evidence 4/4 intents 1/1 pipelines 4/4 6245ms
+
+summary: total=8 pass=7 fail=0 skipped=1 error=0 (skipped excluding filtered-out: 1)
+SUMMARY {"total":8,"executed":7,"pass":7,"fail":0,"skipped":1,"error":0,"skippedExcludingFiltered":1,"bySkipCode":{"known-gap":1}}
+report written: eval/results/stage6-fixtures.json

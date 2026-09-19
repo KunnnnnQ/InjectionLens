@@ -1,0 +1,45 @@
+$ node --test test/fixture-manifest.test.js
+(exit code: 0)
+
+✔ a well-formed manifest validates without errors (6.9148ms)
+✔ the documented vocabularies are the ones the product exports (0.7569ms)
+✔ routeFor and referencedFiles describe how a case is served (1.1181ms)
+✔ a manifest that is not an object is refused (0.3758ms)
+✔ schemaVersion must be exactly 1 (0.7653ms)
+✔ an empty case list can never be reported as a pass (0.1896ms)
+✔ unparseable JSON is reported by the loader, not by the validator (2.2309ms)
+✔ a case must carry id, file, title, pattern and provenance (1.2389ms)
+✔ a missing planRef is a warning, not an error (0.642ms)
+✔ ids must be unique, lower-case kebab-case (0.7908ms)
+✔ one fixture file may not be shared by two cases (0.4075ms)
+✔ a fixture file must be a plain .html name inside the fixture root (0.4592ms)
+✔ a fixture file that does not exist is an error (0.1745ms)
+✔ unknown pipelines are refused on both sides of the expectation (0.3108ms)
+✔ expect.pipelines and expect.evidence must describe the same set (0.1981ms)
+✔ a pipeline cannot be both expected and absent (0.2039ms)
+✔ evidence entries must carry a real pipeline and a non-empty substring (0.2179ms)
+✔ intents are checked against the live intent vocabulary (0.2823ms)
+✔ an intent cannot be both expected and forbidden (0.1635ms)
+✔ capability keys and levels come from the product (0.2183ms)
+✔ a floor above the ceiling is refused, as is an empty bound (0.2752ms)
+✔ primaryCapability must be declared, and a case needs at least one capability (0.3002ms)
+✔ a ua-conditional case must declare real variant files and a known UA token (0.7576ms)
+✔ cloaking expectations only apply to a ua-conditional case (0.1771ms)
+✔ a known gap asserts its own staleness and cannot demand a level (0.3921ms)
+✔ URL hosts: reserved domains and loopback only (0.2234ms)
+✔ an inert fixture produces no safety violations (0.3473ms)
+✔ a fixture that points at a live host is refused (0.2291ms)
+✔ protocol-relative and mailto escapes are refused too (0.1685ms)
+✔ nothing in a fixture may execute (0.3099ms)
+✔ path helpers refuse escapes (0.1208ms)
+✔ an unreferenced replica page is a warning, not a failure (0.1643ms)
+✔ a manifest where every case is a known gap warns that nothing is proven (0.2079ms)
+✔ validation refuses a manifest whose intents were renamed in the product (0.6348ms)
+ℹ tests 34
+ℹ suites 0
+ℹ pass 34
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1241.1216

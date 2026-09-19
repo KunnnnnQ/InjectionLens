@@ -1,0 +1,36 @@
+$ node --test test/fixture-runner.test.js
+(exit code: 0)
+
+✔ observations keep pipelines, intents and levels apart (4.6452ms)
+✔ evidence matching respects pipeline, kind, path and substring (0.3691ms)
+✔ a satisfied expectation set produces no failures (1.1699ms)
+✔ every kind of violated expectation is reported with actual versus expected (0.7666ms)
+✔ an absent pipeline is a positive observation, not a gap (1.1394ms)
+✔ a forbidden intent is a failure wherever it appears (0.3559ms)
+✔ a carrier that must stay benign is checked on its own finding (0.3321ms)
+✔ cloaking must be triggered by the declared token (0.4101ms)
+✔ a capability-independent expectation must hold in every capability run (0.3601ms)
+✔ status and exit-code mapping: ERROR beats FAIL beats SKIPPED (0.346ms)
+✔ the runner adjudicates a synthetic manifest end to end (5167.9899ms)
+✔ --only reports the cases it did not run, and they do not fail the run (1431.3418ms)
+✔ non-finding text in the rendered profile satisfies a rendered-dom expectation (0.7153ms)
+✔ non-finding text in the Reader/Markdown output satisfies a reader-markdown expectation (0.2603ms)
+✔ presence evidence acquires no intent, no level and no finding id (0.2781ms)
+✔ presence evidence cannot satisfy a forbidden intent (0.7888ms)
+✔ a non-zero pipeline item count without the substring still fails (0.2799ms)
+✔ presence evidence that duplicates a finding occurrence is dropped (0.6075ms)
+✔ text known only to one pipeline cannot satisfy another pipeline (0.1273ms)
+✔ a kind or a path can only be satisfied by finding evidence (0.3578ms)
+✔ the command line writes a report, exits 0, and leaves no listener behind (3623.5879ms)
+✔ the command line refuses a run it cannot justify (4224.8557ms)
+✔ --list validates the manifest and runs nothing (916.686ms)
+✔ an invalid manifest stops the run before any fixture is served (1071.5421ms)
+✔ the shared headless browser is closed by this file, so the process can exit (0.2739ms)
+ℹ tests 25
+ℹ suites 0
+ℹ pass 25
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 17975.4021

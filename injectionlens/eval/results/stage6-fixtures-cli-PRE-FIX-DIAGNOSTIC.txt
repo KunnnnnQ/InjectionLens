@@ -1,0 +1,27 @@
+$ node scripts/run-fixtures.js --json eval/results/stage6-fixtures.json
+(exit code: 1)
+
+InjectionLens - Step 6 replica fixture runner
+manifest: C:\Users\kunqi\Kun\GitHub-Portfolio\00-INBOX\InjectionLens-step6-runner\injectionlens\server\fixtures\replicas.manifest.json (sha256 f1090f508893df51...)
+fixtures root: C:\Users\kunqi\Kun\GitHub-Portfolio\00-INBOX\InjectionLens-step6-runner\injectionlens\server\fixtures
+fixture server: http://127.0.0.1:60410 (ephemeral, loopback only, closed=true)
+chrome: C:\Program Files\Google\Chrome\Application\chrome.exe
+external analysis: disabled (allowedHosts = [])
+
+PASS unit42-scam-ad-review [decision-agent] expected >=high observed=high evidence 5/5 intents 1/1 pipelines 3/3 6247ms
+PASS forcepoint-5000-payment [browser-agent] expected >=high observed=critical evidence 5/5 intents 1/1 pipelines 4/4 5981ms
+PASS forcepoint-rm-rf [coding-agent] expected >=critical observed=critical evidence 5/5 intents 1/1 pipelines 4/4 5951ms
+PASS unit42-offscreen-hiring [decision-agent] expected >=high observed=high evidence 5/5 intents 1/1 pipelines 4/4 5864ms
+PASS brave-comet-spoiler [browser-agent] expected >=high observed=high evidence 3/3 intents 2/2 pipelines 3/3 6052ms
+FAIL splx-chatgpt-user-cloaking [summary-only] expected >=high observed=high evidence 1/3 intents 1/1 pipelines 1/3 6210ms
+     FAIL expect.evidence[1]: expected {"pipeline":"rendered-dom","kind":null,"pathContains":null,"contains":"Larkspur Cafe - Weekly Menu"} - rendered-dom did not carry "Larkspur Cafe - Weekly Menu" (kinds seen on that pipeline: comment)
+     FAIL expect.evidence[2]: expected {"pipeline":"reader-markdown","kind":"reader-segment","pathContains":null,"contains":"Larkspur Cafe - Weekly Menu"} - reader-markdown did not carry "Larkspur Cafe - Weekly Menu" (pipeline produced no items)
+     FAIL expect.pipelines (rendered-dom): expected "carries every declared payload" - rendered-dom missed 1 declared payload(s)
+     FAIL expect.pipelines (reader-markdown): expected "carries every declared payload" - reader-markdown missed 1 declared payload(s)
+SKIPPED msft-ai-summary-link [summary-only] expected <=low observed=info evidence 0/0 intents 0/0 pipelines 0/0 6514ms
+     skipped: known-gap - ai-link-prompt-not-ingested: Link-prompt extraction is Human Step 8 P1 work and is not implemented in Step 6. The product stores the assistant URL as an attribute value but never decodes the query parameter into an instruction, so the pre-filled prompt is not analysed.
+PASS arxiv-content-protection [summary-only] expected <=low observed=low evidence 4/4 intents 1/1 pipelines 4/4 5984ms
+
+summary: total=8 pass=6 fail=1 skipped=1 error=0 (skipped excluding filtered-out: 1)
+SUMMARY {"total":8,"executed":7,"pass":6,"fail":1,"skipped":1,"error":0,"skippedExcludingFiltered":1,"bySkipCode":{"known-gap":1}}
+report written: eval/results/stage6-fixtures.json
