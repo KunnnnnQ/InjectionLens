@@ -1,0 +1,338 @@
+
+> injectionlens@0.1.0 test
+> node --test "test/**/*.test.js"
+
+✖ benign hard negatives stay <= low (2.9712ms)
+✖ B5 content-protection notice is classified as content-protection (0.2754ms)
+✖ B7 quoted material is marked as discounted (0.1583ms)
+✖ attacks are scored at the expected level or above (0.1063ms)
+✖ A2 "for example" prefix must not discount hidden content (0.1517ms)
+✖ A5 addressed-to-AI phrasing is detected (0.1502ms)
+✖ A6 addressedToAI is true (0.1265ms)
+✖ A7 carries the destructive-command intent (0.1667ms)
+✖ A8 carries the transaction intent (0.2005ms)
+✖ A9 carries the verdict-manipulation intent (0.2208ms)
+✖ A10 carries the authority-framing intent (0.1562ms)
+✖ A15 tag-character payload is scored high or above and decoded in the explanation (0.1256ms)
+✖ assessSegment returns the documented shape for every capability key (0.1247ms)
+✔ level helpers behave as documented (1.0368ms)
+ℹ tests 14
+ℹ suites 0
+ℹ pass 1
+ℹ fail 13
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 93.1869
+
+✖ failing tests:
+
+test at test\risk.test.js:115:3
+✖ benign hard negatives stay <= low (2.9712ms)
+  AssertionError [ERR_ASSERTION]: assessSegment is not implemented yet: server/lib/risk.js must export assessSegment(segment, capabilityKey)
+  + actual - expected
+  
+  + 'undefined'
+  - 'function'
+  
+      at run (C:\Users\kunqi\Kun\GitHub-Portfolio\00-INBOX\InjectionLens\injectionlens\test\risk.test.js:86:10)
+      at TestContext.<anonymous> (C:\Users\kunqi\Kun\GitHub-Portfolio\00-INBOX\InjectionLens\injectionlens\test\risk.test.js:120:24)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'undefined',
+    expected: 'function',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test\risk.test.js:182:1
+✖ B5 content-protection notice is classified as content-protection (0.2754ms)
+  AssertionError [ERR_ASSERTION]: assessSegment is not implemented yet: server/lib/risk.js must export assessSegment(segment, capabilityKey)
+  + actual - expected
+  
+  + 'undefined'
+  - 'function'
+  
+      at run (C:\Users\kunqi\Kun\GitHub-Portfolio\00-INBOX\InjectionLens\injectionlens\test\risk.test.js:86:10)
+      at TestContext.<anonymous> (C:\Users\kunqi\Kun\GitHub-Portfolio\00-INBOX\InjectionLens\injectionlens\test\risk.test.js:183:18)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'undefined',
+    expected: 'function',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test\risk.test.js:190:1
+✖ B7 quoted material is marked as discounted (0.1583ms)
+  AssertionError [ERR_ASSERTION]: assessSegment is not implemented yet: server/lib/risk.js must export assessSegment(segment, capabilityKey)
+  + actual - expected
+  
+  + 'undefined'
+  - 'function'
+  
+      at run (C:\Users\kunqi\Kun\GitHub-Portfolio\00-INBOX\InjectionLens\injectionlens\test\risk.test.js:86:10)
+      at TestContext.<anonymous> (C:\Users\kunqi\Kun\GitHub-Portfolio\00-INBOX\InjectionLens\injectionlens\test\risk.test.js:191:18)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'undefined',
+    expected: 'function',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test\risk.test.js:115:3
+✖ attacks are scored at the expected level or above (0.1063ms)
+  AssertionError [ERR_ASSERTION]: assessSegment is not implemented yet: server/lib/risk.js must export assessSegment(segment, capabilityKey)
+  + actual - expected
+  
+  + 'undefined'
+  - 'function'
+  
+      at run (C:\Users\kunqi\Kun\GitHub-Portfolio\00-INBOX\InjectionLens\injectionlens\test\risk.test.js:86:10)
+      at TestContext.<anonymous> (C:\Users\kunqi\Kun\GitHub-Portfolio\00-INBOX\InjectionLens\injectionlens\test\risk.test.js:120:24)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'undefined',
+    expected: 'function',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test\risk.test.js:291:1
+✖ A2 "for example" prefix must not discount hidden content (0.1517ms)
+  AssertionError [ERR_ASSERTION]: assessSegment is not implemented yet: server/lib/risk.js must export assessSegment(segment, capabilityKey)
+  + actual - expected
+  
+  + 'undefined'
+  - 'function'
+  
+      at run (C:\Users\kunqi\Kun\GitHub-Portfolio\00-INBOX\InjectionLens\injectionlens\test\risk.test.js:86:10)
+      at TestContext.<anonymous> (C:\Users\kunqi\Kun\GitHub-Portfolio\00-INBOX\InjectionLens\injectionlens\test\risk.test.js:292:14)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'undefined',
+    expected: 'function',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test\risk.test.js:298:1
+✖ A5 addressed-to-AI phrasing is detected (0.1502ms)
+  AssertionError [ERR_ASSERTION]: assessSegment is not implemented yet: server/lib/risk.js must export assessSegment(segment, capabilityKey)
+  + actual - expected
+  
+  + 'undefined'
+  - 'function'
+  
+      at run (C:\Users\kunqi\Kun\GitHub-Portfolio\00-INBOX\InjectionLens\injectionlens\test\risk.test.js:86:10)
+      at TestContext.<anonymous> (C:\Users\kunqi\Kun\GitHub-Portfolio\00-INBOX\InjectionLens\injectionlens\test\risk.test.js:299:18)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'undefined',
+    expected: 'function',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test\risk.test.js:306:1
+✖ A6 addressedToAI is true (0.1265ms)
+  AssertionError [ERR_ASSERTION]: assessSegment is not implemented yet: server/lib/risk.js must export assessSegment(segment, capabilityKey)
+  + actual - expected
+  
+  + 'undefined'
+  - 'function'
+  
+      at run (C:\Users\kunqi\Kun\GitHub-Portfolio\00-INBOX\InjectionLens\injectionlens\test\risk.test.js:86:10)
+      at TestContext.<anonymous> (C:\Users\kunqi\Kun\GitHub-Portfolio\00-INBOX\InjectionLens\injectionlens\test\risk.test.js:307:18)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'undefined',
+    expected: 'function',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test\risk.test.js:315:1
+✖ A7 carries the destructive-command intent (0.1667ms)
+  AssertionError [ERR_ASSERTION]: assessSegment is not implemented yet: server/lib/risk.js must export assessSegment(segment, capabilityKey)
+  + actual - expected
+  
+  + 'undefined'
+  - 'function'
+  
+      at run (C:\Users\kunqi\Kun\GitHub-Portfolio\00-INBOX\InjectionLens\injectionlens\test\risk.test.js:86:10)
+      at TestContext.<anonymous> (C:\Users\kunqi\Kun\GitHub-Portfolio\00-INBOX\InjectionLens\injectionlens\test\risk.test.js:316:18)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'undefined',
+    expected: 'function',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test\risk.test.js:323:1
+✖ A8 carries the transaction intent (0.2005ms)
+  AssertionError [ERR_ASSERTION]: assessSegment is not implemented yet: server/lib/risk.js must export assessSegment(segment, capabilityKey)
+  + actual - expected
+  
+  + 'undefined'
+  - 'function'
+  
+      at run (C:\Users\kunqi\Kun\GitHub-Portfolio\00-INBOX\InjectionLens\injectionlens\test\risk.test.js:86:10)
+      at TestContext.<anonymous> (C:\Users\kunqi\Kun\GitHub-Portfolio\00-INBOX\InjectionLens\injectionlens\test\risk.test.js:324:18)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'undefined',
+    expected: 'function',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test\risk.test.js:331:1
+✖ A9 carries the verdict-manipulation intent (0.2208ms)
+  AssertionError [ERR_ASSERTION]: assessSegment is not implemented yet: server/lib/risk.js must export assessSegment(segment, capabilityKey)
+  + actual - expected
+  
+  + 'undefined'
+  - 'function'
+  
+      at run (C:\Users\kunqi\Kun\GitHub-Portfolio\00-INBOX\InjectionLens\injectionlens\test\risk.test.js:86:10)
+      at TestContext.<anonymous> (C:\Users\kunqi\Kun\GitHub-Portfolio\00-INBOX\InjectionLens\injectionlens\test\risk.test.js:332:18)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'undefined',
+    expected: 'function',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test\risk.test.js:339:1
+✖ A10 carries the authority-framing intent (0.1562ms)
+  AssertionError [ERR_ASSERTION]: assessSegment is not implemented yet: server/lib/risk.js must export assessSegment(segment, capabilityKey)
+  + actual - expected
+  
+  + 'undefined'
+  - 'function'
+  
+      at run (C:\Users\kunqi\Kun\GitHub-Portfolio\00-INBOX\InjectionLens\injectionlens\test\risk.test.js:86:10)
+      at TestContext.<anonymous> (C:\Users\kunqi\Kun\GitHub-Portfolio\00-INBOX\InjectionLens\injectionlens\test\risk.test.js:340:18)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'undefined',
+    expected: 'function',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test\risk.test.js:358:1
+✖ A15 tag-character payload is scored high or above and decoded in the explanation (0.1256ms)
+  AssertionError [ERR_ASSERTION]: assessSegment is not implemented yet: server/lib/risk.js must export assessSegment(segment, capabilityKey)
+  + actual - expected
+  
+  + 'undefined'
+  - 'function'
+  
+      at run (C:\Users\kunqi\Kun\GitHub-Portfolio\00-INBOX\InjectionLens\injectionlens\test\risk.test.js:86:10)
+      at TestContext.<anonymous> (C:\Users\kunqi\Kun\GitHub-Portfolio\00-INBOX\InjectionLens\injectionlens\test\risk.test.js:359:18)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'undefined',
+    expected: 'function',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test\risk.test.js:371:1
+✖ assessSegment returns the documented shape for every capability key (0.1247ms)
+  AssertionError [ERR_ASSERTION]: assessSegment is not implemented yet: server/lib/risk.js must export assessSegment(segment, capabilityKey)
+  + actual - expected
+  
+  + 'undefined'
+  - 'function'
+  
+      at run (C:\Users\kunqi\Kun\GitHub-Portfolio\00-INBOX\InjectionLens\injectionlens\test\risk.test.js:86:10)
+      at TestContext.<anonymous> (C:\Users\kunqi\Kun\GitHub-Portfolio\00-INBOX\InjectionLens\injectionlens\test\risk.test.js:373:20)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'undefined',
+    expected: 'function',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
