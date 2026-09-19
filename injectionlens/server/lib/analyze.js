@@ -2,13 +2,36 @@
 // across profiles, attach signals, and produce findings with tiered impact.
 const { fetchHtml, renderPage, AI_CRAWLER_UAS } = require('./ingest');
 const { buildRawProfile, buildReaderProfile, normText } = require('./profiles');
-const { detectInstruction, analyzeInstruction, primaryInstruction, computeImpact, CAPABILITY_TEMPLATES } = require('./risk');
+const { analyzeInstruction, assessSegment, CAPABILITY_TEMPLATES } = require('./risk');
 
 const EXCERPT_LEN = 200;
 
 function excerpt(text) {
   const t = normText(text);
   return t.length > EXCERPT_LEN ? t.slice(0, EXCERPT_LEN) + '…' : t;
+}
+
+// Which delivery channel did this segment arrive through? The answer decides
+// how much weight the text carries: a hidden delivery is evidence of intent.
+const ATTRIBUTE_KINDS = new Set(['attribute', 'meta', 'jsonld']);
+
+function detectDelivery(group, humanVisible) {
+  const raw = group.httpSource;
+  if (raw) {
+    if (raw.kind === 'comment') return 'comment';
+    if (raw.kind === 'meta') return 'meta';
+    if (ATTRIBUTE_KINDS.has(raw.kind)) return raw.kind;
+  }
+  if (group.renderedDom) return group.renderedDom.visible ? 'visible' : 'css-hidden';
+  if (humanVisible) return 'visible';
+  // Present in the raw source but the renderer dropped it (parser/JS removed it).
+  return 'css-hidden';
+}
+
+function detectInCodeOrQuote(group) {
+  return !!(group.renderedDom && group.renderedDom.inCodeOrQuote)
+    || !!(group.httpSource && group.httpSource.inCodeOrQuote)
+    || !!(group.readerMarkdown && group.readerMarkdown.inCodeOrQuote);
 }
 
 function tokenSet(text) {
@@ -24,7 +47,11 @@ function jaccard(a, b) {
 
 async function analyze(url, capabilityKey = 'summary-only') {
   const started = Date.now();
-  if (!CAPABILITY_TEMPLATES[capabilityKey]) capabilityKey = 'summary-only';
+  // Fail loudly instead of silently falling back: a capability template the
+  // model does not know would produce levels nobody can reproduce.
+  if (!CAPABILITY_TEMPLATES[capabilityKey]) {
+    throw new Error(`Unknown capability template "${capabilityKey}". Known templates: ${Object.keys(CAPABILITY_TEMPLATES).join(', ')}`);
+  }
 
   // --- run the four pipelines ---
   const http = await fetchHtml(url); // Pipeline A input
@@ -152,15 +179,37 @@ async function analyze(url, capabilityKey = 'summary-only') {
     }
 
     const inQuotedMarkup = !!(occ.renderedDom && occ.renderedDom.inCodeOrQuote) || !!(occ.httpSource && occ.httpSource.inCodeOrQuote);
-    const matches = analyzeInstruction(g.text, inQuotedMarkup);
-    const primary = primaryInstruction(matches);
-    const instruction = primary ? { type: primary.type } : null;
-    const quotedContext = matches.length ? matches.every((m) => m.quotedContext) : inQuotedMarkup;
-    if (instruction && quotedContext) {
-      signals.push({ type: 'quoted-context', severity: 'info', detail: 'Matches an injection pattern but sits inside code/quote or clearly defensive prose — possibly educational material (hard negative).' });
+    const delivery = detectDelivery(occ, humanVisible);
+    // The segment-level impact model owns the decision: level, intents,
+    // addressed-to-AI, discount, and the explanation the UI shows.
+    const assessment = assessSegment(
+      {
+        text: g.text,
+        humanVisible,
+        delivery,
+        inCodeOrQuote: detectInCodeOrQuote(occ),
+      },
+      capabilityKey,
+    );
+    const legacyMatches = analyzeInstruction(g.text, inQuotedMarkup);
+    const intents = assessment.intents.length ? assessment.intents : legacyMatches.map((m) => m.type);
+    const primaryIntent = assessment.primaryIntent || (intents.length ? intents[0] : null);
+    const quotedContext = assessment.intents.length
+      ? assessment.discounted
+      : (legacyMatches.length ? legacyMatches.every((m) => m.quotedContext) : inQuotedMarkup);
+    const instruction = primaryIntent ? { type: primaryIntent } : null;
+    const impact = { level: assessment.level, explanation: assessment.explanation };
+    if (assessment.discounted) {
+      signals.push({ type: 'quoted-context', severity: 'info', detail: 'Matches an injection pattern but sits in visible code/quote text, so it is likely quoted attack material rather than an instruction to follow.' });
+    }
+    if (assessment.decoded.length) {
+      signals.push({ type: 'decoded-invisible-text', severity: 'high', detail: `Hidden Unicode tag characters decoded to: ${assessment.decoded.join(' | ')}` });
+    }
+    if (assessment.addressedToAI) {
+      signals.push({ type: 'addressed-to-ai', severity: 'info', detail: 'The text talks to an AI/agent rather than to a human reader.' });
     }
 
-    // evidence tier: hidden/comment/zero-width delivery + pattern match = strong
+    // evidence tier: kept for the UI and for the cloaking finding
     const hasStrongDelivery = signals.some((s) => ['html-comment', 'zero-width-chars', 'render-hidden', 'ai-visible-human-invisible'].includes(s.type));
     const hasWeakDelivery = signals.some((s) => ['hidden-in-source', 'raw-only', 'meta-tag'].includes(s.type));
     let evidenceTier = 0;
@@ -171,7 +220,6 @@ async function analyze(url, capabilityKey = 'summary-only') {
     else if (!instruction && hasWeakDelivery) evidenceTier = 1;
 
     const interesting = !!instruction || signals.some((s) => s.severity !== 'info');
-    const impact = computeImpact(instruction ? instruction.type : null, evidenceTier, capabilityKey, { quotedContext, cloaked: !!cloak && (occ.httpSource || occ.renderedDom) });
 
     if (interesting) {
       findings.push({
@@ -179,10 +227,14 @@ async function analyze(url, capabilityKey = 'summary-only') {
         excerpt: excerpt(g.text),
         fullText: g.text.length <= 600 ? g.text : g.text.slice(0, 600) + '…',
         humanVisible,
+        delivery,
         aiProfiles,
         signals,
         instruction: instruction ? instruction.type : null,
-        instructionTypes: matches.map((m) => m.type),
+        instructionTypes: intents,
+        intents: assessment.intents,
+        addressedToAI: assessment.addressedToAI,
+        discounted: assessment.discounted,
         evidenceTier,
         quotedContext,
         impact,
@@ -195,6 +247,7 @@ async function analyze(url, capabilityKey = 'summary-only') {
         key: g.key.slice(0, 60),
         excerpt: excerpt(g.text),
         humanVisible,
+        delivery,
         httpSource: !!occ.httpSource,
         renderedDom: occ.renderedDom ? (occ.renderedDom.visible ? 'visible' : 'hidden') : 'absent',
         readerMarkdown: !!occ.readerMarkdown,
@@ -209,20 +262,27 @@ async function analyze(url, capabilityKey = 'summary-only') {
   findings.sort((a, b) => order[a.impact.level] - order[b.impact.level]);
 
   if (cloak) {
-    const cloakMatches = analyzeInstruction((cloak.aiOnlyFull || []).join('\n'), false);
-    const cloakPrimary = primaryInstruction(cloakMatches);
+    const cloakText = (cloak.aiOnlyFull || []).join('\n');
+    const cloakAssessment = assessSegment(
+      { text: cloakText, humanVisible: false, delivery: 'ai-only', inCodeOrQuote: false },
+      capabilityKey,
+    );
     findings.unshift({
       id: 'F' + ++fid,
       excerpt: `Server returned ${cloak.aiOnlySegments.length}+ AI-only segment(s) to ${cloak.bot}`,
       fullText: cloak.aiOnlySegments.join('\n---\n'),
       humanVisible: false,
+      delivery: 'ai-only',
       aiProfiles: ['http-source (AI-crawler UA)'],
       signals: [{ type: 'ua-cloaking', severity: 'critical', detail: `Same URL serves different content to ${cloak.bot} vs a browser UA (${cloak.humanBytes} B human vs ${cloak.aiBytes} B bot response).` }],
-      instruction: cloakPrimary ? cloakPrimary.type : null,
-      instructionTypes: cloakMatches.map((m) => m.type),
+      instruction: cloakAssessment.primaryIntent,
+      instructionTypes: cloakAssessment.intents,
+      intents: cloakAssessment.intents,
+      addressedToAI: cloakAssessment.addressedToAI,
+      discounted: cloakAssessment.discounted,
       evidenceTier: 3,
-      quotedContext: cloakMatches.length ? cloakMatches.every((m) => m.quotedContext) : false,
-      impact: computeImpact(cloakPrimary ? cloakPrimary.type : null, 3, capabilityKey, { cloaked: true, quotedContext: cloakMatches.length ? cloakMatches.every((m) => m.quotedContext) : false }),
+      quotedContext: cloakAssessment.discounted,
+      impact: { level: cloakAssessment.level, explanation: cloakAssessment.explanation },
       nodeRef: null,
     });
   }
