@@ -7,6 +7,10 @@ const CHROME = [
   'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe',
 ].find((p) => fs.existsSync(p));
 
+// An analysis runs the four pipelines plus one HTTP probe per configured
+// AI-agent token (8 today), so the wait must allow for all of them.
+const ANALYZE_TIMEOUT_MS = Number(process.env.VERIFY_UI_TIMEOUT_MS) || 180000;
+
 (async () => {
   const browser = await chromium.launch({ executablePath: CHROME, headless: true });
   const page = await browser.newPage({ viewport: { width: 1600, height: 1000 } });
@@ -14,13 +18,13 @@ const CHROME = [
   page.on('pageerror', (e) => errors.push('pageerror: ' + e.message));
   page.on('console', (m) => { if (m.type() === 'error') errors.push('console: ' + m.text()); });
 
-  await page.goto('http://localhost:7100', { waitUntil: 'networkidle' });
+  await page.goto('http://127.0.0.1:7100', { waitUntil: 'networkidle' });
   await page.screenshot({ path: 'shots/01-initial.png' });
 
   // pick the white-on-white + comment attack fixture and analyze
   await page.selectOption('select', '/fixtures/attack-hidden-whitewhite-comment.html');
   await page.click('button.analyze');
-  await page.waitForSelector('.finding', { timeout: 60000 });
+  await page.waitForSelector('.finding', { timeout: ANALYZE_TIMEOUT_MS });
   await page.waitForTimeout(800);
   await page.screenshot({ path: 'shots/02-findings.png', fullPage: false });
 
@@ -44,7 +48,7 @@ const CHROME = [
   await page.evaluate(() => window.scrollTo(0, 0));
   await page.selectOption('select', '/fixtures/cloaking.html');
   await page.click('button.analyze');
-  await page.waitForSelector('.cloak-banner', { timeout: 60000 });
+  await page.waitForSelector('.cloak-banner', { timeout: ANALYZE_TIMEOUT_MS });
   await page.waitForTimeout(600);
   await page.screenshot({ path: 'shots/06-cloaking.png' });
 

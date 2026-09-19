@@ -5,35 +5,46 @@ const path = require('path');
 const fs = require('fs');
 const { analyze } = require('./lib/analyze');
 const { CAPABILITY_TEMPLATES } = require('./lib/risk');
+const { createPolicy, DEFAULT_FIXTURE_PORT } = require('./lib/net-guard');
+const { detectCrawlerToken } = require('./lib/ingest');
 
-const PORT = process.env.PORT || 7101;
+const PORT = Number(process.env.PORT) || DEFAULT_FIXTURE_PORT;
+// Bind to loopback only. "localhost" resolves to ::1 on Windows as often as to
+// 127.0.0.1, so everything internal uses the literal address to avoid the two
+// stacks disagreeing about where the server is.
+const HOST = '127.0.0.1';
+
 const app = express();
 app.use(cors());
 app.use(express.json({ limit: '256kb' }));
 
-// ---------- SSRF guard ----------
-// Only http(s). Private/loopback targets are allowed ONLY on this server's own
-// fixture port — we never fetch internal network resources on behalf of a user.
-function assertFetchable(rawUrl) {
-  let u;
-  try { u = new URL(rawUrl); } catch { throw new Error('Invalid URL'); }
-  if (!/^https?:$/.test(u.protocol)) throw new Error('Only http/https URLs are supported');
-  const host = u.hostname.toLowerCase();
-  const isLocalhost = host === 'localhost' || host === '127.0.0.1' || host === '[::1]';
-  if (isLocalhost && Number(u.port) !== PORT) {
-    throw new Error('Refused: localhost targets other than the built-in fixture server are blocked (SSRF guard)');
+// ---------- network boundary ----------
+// One policy for the whole process: the exact fixture origin locally, plus any
+// host named in INJECTIONLENS_ALLOWED_HOSTS. External analysis is off by default.
+const policy = createPolicy({
+  allowedHosts: process.env.INJECTIONLENS_ALLOWED_HOSTS,
+  fixtureOrigins: [{ host: HOST, port: PORT }],
+});
+
+async function resolveTarget(rawUrl) {
+  if (typeof rawUrl !== 'string' || !rawUrl) throw new Error('url is required');
+  const candidate = rawUrl.startsWith('/') ? `http://${HOST}:${PORT}${rawUrl}` : rawUrl;
+  const verdict = await policy.checkTarget(candidate, { purpose: 'api-analyze' });
+  if (!verdict.allowed) {
+    const err = new Error(verdict.reason);
+    err.code = verdict.code;
+    throw err;
   }
-  if (!isLocalhost && /^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|169\.254\.)/.test(host)) {
-    throw new Error('Refused: private network targets are blocked (SSRF guard)');
-  }
-  return u.toString();
+  return verdict.url.toString();
 }
 
 // ---------- Cloaking fixture (dynamic — must come before static) ----------
 app.get('/fixtures/cloaking.html', (req, res) => {
-  const ua = req.get('user-agent') || '';
-  const isAiBot = /GPTBot|ClaudeBot|PerplexityBot|Google-Extended|Bytespider/i.test(ua);
-  const file = isAiBot ? 'cloaking-ai.html' : 'cloaking-human.html';
+  // Only real HTTP User-Agent tokens decide this. Google-Extended is a
+  // robots.txt product token, not an HTTP UA, so it is not matched here
+  // (plan §3 item 9).
+  const token = detectCrawlerToken(req.get('user-agent') || '');
+  const file = token ? 'cloaking-ai.html' : 'cloaking-human.html';
   res.type('html').send(fs.readFileSync(path.join(__dirname, 'fixtures', file), 'utf8'));
 });
 
@@ -55,22 +66,43 @@ app.get('/api/capabilities', (_req, res) => {
   res.json(Object.entries(CAPABILITY_TEMPLATES).map(([key, t]) => ({ key, label: t.label, blurb: t.blurb })));
 });
 
+// What the analyse endpoint will and will not fetch, so the UI can explain it.
+app.get('/api/network-policy', (_req, res) => {
+  res.json({
+    host: HOST,
+    port: PORT,
+    externalAnalysis: 'disabled by default',
+    allowedHosts: Array.from(policy.allowedHosts),
+    allowedHostsEnvVar: 'INJECTIONLENS_ALLOWED_HOSTS',
+    fixtureOrigins: policy.fixtureOrigins,
+    uaProbeAllowlistEnvVar: 'INJECTIONLENS_UA_PROBE_ALLOWLIST',
+    uaProbeScope: 'local fixture origin only, unless a host is explicitly allowlisted',
+    limitations: [
+      'The guard validates every DNS answer, but does not pin the connection to the validated address, so DNS rebinding is not fully solved.',
+      'UA probing is a lower bound: cloaking can also be driven by behavioural fingerprinting, which this tool does not detect.',
+      'Blocked subresources are reported, but a page may still behave differently in ways this analysis cannot observe.',
+    ],
+  });
+});
+
 app.post('/api/analyze', async (req, res) => {
   try {
     const { url, capability } = req.body || {};
-    if (!url || typeof url !== 'string') return res.status(400).json({ error: 'url is required' });
-    const target = url.startsWith('/') ? `http://localhost:${PORT}${url}` : assertFetchable(url);
-    const result = await analyze(target, capability);
+    const target = await resolveTarget(url);
+    const result = await analyze(target, capability, { policy });
     res.json(result);
   } catch (err) {
-    res.status(500).json({ error: String(err.message || err) });
+    const blocked = ['unallowlisted-host', 'blocked-ip', 'url-credentials', 'unsupported-protocol', 'malformed-url', 'fixture-origin-not-literal'];
+    const status = blocked.includes(err.code) ? 403 : 500;
+    res.status(status).json({ error: String(err.message || err), code: err.code || null, blocked: status === 403 });
   }
 });
 
 if (require.main === module) {
-  app.listen(PORT, () => {
-    console.log(`[InjectionLens] API + fixtures on http://localhost:${PORT}`);
+  app.listen(PORT, HOST, () => {
+    console.log(`[InjectionLens] API + fixtures on http://${HOST}:${PORT}`);
+    console.log(`[InjectionLens] external analysis: ${policy.allowedHosts.size ? Array.from(policy.allowedHosts).join(', ') : 'disabled (no allowlisted hosts)'}`);
   });
 }
 
-module.exports = { app, PORT };
+module.exports = { app, PORT, HOST, policy };

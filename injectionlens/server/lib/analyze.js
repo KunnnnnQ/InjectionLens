@@ -1,8 +1,9 @@
 // Orchestration: run the four ingestion pipelines on one URL, group segments
 // across profiles, attach signals, and produce findings with tiered impact.
-const { fetchHtml, renderPage, AI_CRAWLER_UAS } = require('./ingest');
+const { fetchHtml, renderPage, AI_CRAWLER_UAS, uaProbePermission } = require('./ingest');
 const { buildRawProfile, buildReaderProfile, normText } = require('./profiles');
 const { analyzeInstruction, assessSegment, CAPABILITY_TEMPLATES } = require('./risk');
+const { defaultPolicy } = require('./net-guard');
 
 const EXCERPT_LEN = 200;
 
@@ -13,16 +14,22 @@ function excerpt(text) {
 
 // Which delivery channel did this segment arrive through? The answer decides
 // how much weight the text carries: a hidden delivery is evidence of intent.
-const ATTRIBUTE_KINDS = new Set(['attribute', 'meta', 'jsonld']);
+const ATTRIBUTE_KINDS = new Set(['attribute', 'data-attribute', 'hidden-input-value', 'meta', 'jsonld', 'jsonld-malformed']);
 
 function detectDelivery(group, humanVisible) {
   const raw = group.httpSource;
   if (raw) {
-    if (raw.kind === 'comment') return 'comment';
-    if (raw.kind === 'meta') return 'meta';
-    if (ATTRIBUTE_KINDS.has(raw.kind)) return raw.kind;
+    const kind = raw.extractionKind || raw.kind;
+    if (kind === 'comment') return 'comment';
+    if (kind === 'meta') return 'meta';
+    if (kind === 'jsonld' || kind === 'jsonld-malformed') return 'jsonld';
+    if (ATTRIBUTE_KINDS.has(kind)) return 'attribute';
   }
-  if (group.renderedDom) return group.renderedDom.visible ? 'visible' : 'css-hidden';
+  if (group.renderedDom) {
+    if (!group.renderedDom.visible) return 'css-hidden';
+    if (group.renderedDom.nearInvisibleReasons && group.renderedDom.nearInvisibleReasons.length) return 'near-invisible';
+    return 'visible';
+  }
   if (humanVisible) return 'visible';
   // Present in the raw source but the renderer dropped it (parser/JS removed it).
   return 'css-hidden';
@@ -45,7 +52,7 @@ function jaccard(a, b) {
   return inter / (a.size + b.size - inter);
 }
 
-async function analyze(url, capabilityKey = 'summary-only') {
+async function analyze(url, capabilityKey = 'summary-only', { policy = defaultPolicy } = {}) {
   const started = Date.now();
   // Fail loudly instead of silently falling back: a capability template the
   // model does not know would produce levels nobody can reproduce.
@@ -53,35 +60,70 @@ async function analyze(url, capabilityKey = 'summary-only') {
     throw new Error(`Unknown capability template "${capabilityKey}". Known templates: ${Object.keys(CAPABILITY_TEMPLATES).join(', ')}`);
   }
 
+  // One network policy per scan: DNS answers are reused inside it, every hop and
+  // every browser subresource is checked against it.
+  const guard = await policy.checkTarget(url, { purpose: 'analyze-target' });
+  if (!guard.allowed) {
+    const err = new Error(guard.reason);
+    err.code = guard.code;
+    throw err;
+  }
+
   // --- run the four pipelines ---
-  const http = await fetchHtml(url); // Pipeline A input
-  const rendered = await renderPage(url); // Pipeline B + D
+  const http = await fetchHtml(url, undefined, undefined, policy); // Pipeline A input
+  const rendered = await renderPage(url, { policy }); // Pipeline B + D
   const raw = buildRawProfile(http.html); // Pipeline A: raw HTTP source
   const reader = buildReaderProfile(rendered.html); // Pipeline C: Reader/Markdown
   const a11y = rendered.a11yNodes || []; // Pipeline D: accessibility tree (flat from CDP)
 
   // --- group segments across profiles ---
+  // The normalized text is a COMPARISON KEY only: it decides which observations
+  // describe the same content. It is never used as the text we analyse, because
+  // normalization strips exactly the invisible characters a payload may hide in.
+  // Each group keeps the original evidence of every observation, and the text
+  // handed to the risk model is the longest original preserved for that key.
   const groups = new Map(); // key: normalized text
 
-  function getGroup(text) {
-    const key = normText(text);
+  function getGroup(originalText, normalizedText) {
+    const key = normText(normalizedText !== undefined ? normalizedText : originalText);
     if (!key) return null;
     if (!groups.has(key)) {
       groups.set(key, {
         key,
-        text: key,
+        originalText: typeof originalText === 'string' ? originalText : key,
+        normalizedText: key,
+        occurrences: [],
         httpSource: null,
         renderedDom: null,
         readerMarkdown: null,
         accessibilityTree: null,
       });
     }
-    return groups.get(key);
+    const group = groups.get(key);
+    // Prefer the longest preserved original: it is the one most likely to still
+    // carry an invisible/decoded channel the normalizer can inspect.
+    if (typeof originalText === 'string' && originalText.length > group.originalText.length) {
+      group.originalText = originalText;
+    }
+    return group;
+  }
+
+  function recordOccurrence(group, item, pipeline) {
+    if (!group || !item) return;
+    group.occurrences.push({
+      pipeline,
+      extractionKind: item.extractionKind || item.kind || 'unknown',
+      path: item.path || null,
+      originalText: item.originalText !== undefined ? item.originalText : (item.text || ''),
+      normalizedText: item.normalizedText !== undefined ? item.normalizedText : normText(item.text || ''),
+      invisibleClasses: item.invisibleClasses || [],
+      decodedText: item.decodedText || null,
+    });
   }
 
   // fuzzy attach for reader segments (Readability may merge/split text)
   function attachFuzzy(profile, seg, extra = {}) {
-    const key = normText(seg.text);
+    const key = normText(seg.normalizedText !== undefined ? seg.normalizedText : seg.text);
     if (groups.has(key)) { groups.get(key)[profile] = { ...seg, ...extra }; return; }
     const toks = tokenSet(key);
     let best = null; let bestScore = 0.6;
@@ -92,52 +134,101 @@ async function analyze(url, capabilityKey = 'summary-only') {
     }
     if (best) best[profile] = { ...seg, ...extra, fuzzyMatched: true };
     else {
-      const g = getGroup(key);
+      const g = getGroup(seg.originalText !== undefined ? seg.originalText : seg.text, key);
       if (g) g[profile] = { ...seg, ...extra };
     }
   }
 
   for (const item of raw.items) {
-    const g = getGroup(item.text);
+    const g = getGroup(item.originalText, item.normalizedText);
     if (g && !g.httpSource) g.httpSource = item;
+    recordOccurrence(g, item, 'http-source');
   }
   for (const item of rendered.items) {
-    const g = getGroup(item.text);
+    const g = getGroup(item.originalText, item.normalizedText);
     if (g && !g.renderedDom) g.renderedDom = item;
+    recordOccurrence(g, item, 'rendered-dom');
   }
   for (const c of rendered.comments) {
-    const g = getGroup(c.text);
+    const g = getGroup(c.originalText, normText(c.originalText));
     if (g) { g.commentInRendered = true; }
+    recordOccurrence(g, { originalText: c.originalText, normalizedText: normText(c.originalText), extractionKind: 'comment', path: '(rendered DOM comment)' }, 'rendered-dom');
   }
-  for (const seg of reader.segments || []) attachFuzzy('readerMarkdown', seg, { inReader: true });
+  for (const seg of reader.segments || []) {
+    attachFuzzy('readerMarkdown', seg, { inReader: true });
+    recordOccurrence(getGroup(seg.originalText, seg.normalizedText), seg, 'reader-markdown');
+  }
   for (const node of a11y) {
     if (node.name.length < 4) continue;
-    attachFuzzy('accessibilityTree', { role: node.role, name: node.name }, {});
+    attachFuzzy('accessibilityTree', { role: node.role, name: node.name, originalText: node.name, normalizedText: normText(node.name), extractionKind: 'a11y-node', path: `accessibility tree (role=${node.role})` }, {});
+    recordOccurrence(getGroup(node.name, normText(node.name)), { originalText: node.name, normalizedText: normText(node.name), extractionKind: 'a11y-node', path: `accessibility tree (role=${node.role})` }, 'accessibility-tree');
   }
 
-  // --- cloaking probe: same URL, AI-crawler UA ---
+  // --- cloaking probe: same URL, each configured AI-agent UA ---
+  // The probe is authorised only against the local fixture origin (or an
+  // explicitly allowlisted host). Every configured entry is probed, and the
+  // per-entry result is recorded — including "skipped" — so the report can name
+  // the actual UA token responsible instead of guessing.
+  const uaProbe = [];
   let cloak = null;
-  try {
+  {
+    const permission = uaProbePermission(url, policy);
     const baseText = new Set();
     for (const g of groups.values()) baseText.add(g.key);
-    for (const bot of AI_CRAWLER_UAS.slice(0, 2)) {
-      const aiFetch = await fetchHtml(url, bot.ua);
-      const aiRaw = buildRawProfile(aiFetch.html);
-      const aiOnly = aiRaw.items
-        .map((i) => normText(i.text))
-        .filter((t) => t.length > 12 && !baseText.has(t) && !Array.from(baseText).some((b) => jaccard(tokenSet(b), tokenSet(t)) > 0.7));
-      if (aiOnly.length) {
-        cloak = {
-          bot: bot.ua.match(/compatible; (\w+)/)?.[1] || bot.bot,
-          humanBytes: http.html.length,
-          aiBytes: aiFetch.html.length,
-          aiOnlySegments: aiOnly.slice(0, 8).map(excerpt),
-          aiOnlyFull: aiOnly.slice(0, 8),
-        };
-        break;
+    for (const bot of AI_CRAWLER_UAS) {
+      const record = {
+        token: bot.token,
+        vendor: bot.vendor,
+        category: bot.category,
+        status: 'pending',
+        bytes: null,
+        differs: false,
+        aiOnlyCount: 0,
+      };
+      if (!permission.allowed) {
+        record.status = permission.reason;
+        uaProbe.push(record);
+        continue;
       }
+      try {
+        // The probe must validate against the SAME policy as the scan, otherwise a
+        // run bound to another port silently has every probe refused.
+        const aiFetch = await fetchHtml(url, bot.ua, undefined, policy);
+        const aiRaw = buildRawProfile(aiFetch.html);
+        const aiOnly = aiRaw.items
+          .map((i) => normText(i.text))
+          .filter((t) => t.length > 12 && !baseText.has(t) && !Array.from(baseText).some((b) => jaccard(tokenSet(b), tokenSet(t)) > 0.7));
+        record.bytes = aiFetch.html.length;
+        record.differs = aiFetch.html !== http.html;
+        record.aiOnlyCount = aiOnly.length;
+        record.status = 'probed';
+        if (aiOnly.length && !cloak) {
+          cloak = {
+            bot: bot.token,
+            vendor: bot.vendor,
+            category: bot.category,
+            uaUsed: bot.ua,
+            triggerToken: bot.token,
+            humanBytes: http.html.length,
+            aiBytes: aiFetch.html.length,
+            aiOnlySegments: aiOnly.slice(0, 8).map(excerpt),
+            aiOnlyFull: aiOnly.slice(0, 8),
+          };
+        }
+      } catch (err) {
+        record.status = `probe failed: ${err.message}`;
+      }
+      uaProbe.push(record);
     }
-  } catch { /* cloaking probe is best-effort */ }
+    if (!permission.allowed && uaProbe.length) {
+      uaProbe.push({
+        token: null,
+        status: permission.reason,
+        scope: permission.scope,
+        note: 'Sending crawler/fetcher User-Agents to third-party hosts needs explicit permission; ordinary page analysis does not imply it.',
+      });
+    }
+  }
 
   // --- signals + findings ---
   const findings = [];
@@ -154,11 +245,24 @@ async function analyze(url, capabilityKey = 'summary-only') {
     if (occ.readerMarkdown) aiProfiles.push('reader-markdown');
     if (occ.accessibilityTree) aiProfiles.push('accessibility-tree');
 
+    const attrKind = occ.httpSource && ['data-attribute', 'attribute', 'hidden-input-value'].includes(occ.httpSource.extractionKind);
     if (occ.httpSource) {
-      if (occ.httpSource.kind === 'comment') signals.push({ type: 'html-comment', severity: 'high', detail: 'Only exists as an HTML comment in the raw source — invisible to human readers.' });
-      if (occ.httpSource.kind === 'meta') signals.push({ type: 'meta-tag', severity: 'info', detail: 'Inside a <meta> tag — some agents ingest page metadata.' });
-      if (occ.httpSource.zeroWidth) signals.push({ type: 'zero-width-chars', severity: 'high', detail: 'Contains zero-width/invisible Unicode characters.' });
-      if (occ.httpSource.hiddenHints && occ.httpSource.hiddenHints.length && occ.httpSource.kind === 'element') {
+      const srcKind = occ.httpSource.extractionKind || occ.httpSource.kind;
+      if (srcKind === 'comment') signals.push({ type: 'html-comment', severity: 'high', detail: 'Only exists as an HTML comment in the raw source — invisible to human readers.' });
+      if (srcKind === 'meta') signals.push({ type: 'meta-tag', severity: 'info', detail: 'Inside a <meta> tag — some agents ingest page metadata.' });
+      if (srcKind === 'title') signals.push({ type: 'document-title', severity: 'info', detail: 'From the document <title> in <head>, which agents read before the body.' });
+      if (srcKind === 'template') signals.push({ type: 'inert-template', severity: 'medium', detail: 'Inside a <template> element: never rendered for a human, but present in the source an agent may read.' });
+      if (srcKind === 'noscript') signals.push({ type: 'noscript-content', severity: 'medium', detail: 'Inside <noscript>: shown only when scripting is off, but present in the source.' });
+      if (srcKind === 'jsonld' || srcKind === 'jsonld-malformed') signals.push({ type: 'jsonld', severity: srcKind === 'jsonld-malformed' ? 'medium' : 'info', detail: srcKind === 'jsonld-malformed' ? 'Malformed JSON-LD kept as raw evidence (it could not be parsed and was not executed).' : 'A string value inside JSON-LD structured data.' });
+      if (srcKind === 'cdata') signals.push({ type: 'cdata', severity: 'info', detail: 'Inside a CDATA section.' });
+      if (attrKind) signals.push({ type: 'attribute-value', severity: 'high', detail: `Page-authored attribute value (${occ.httpSource.path}) — present in the source, but not rendered as text for a human.` });
+      if (occ.httpSource.hasInvisible && occ.httpSource.invisibleClasses && occ.httpSource.invisibleClasses.length) {
+        signals.push({ type: 'invisible-unicode', severity: 'high', detail: `Contains invisible Unicode: ${occ.httpSource.invisibleClasses.join(', ')}.` });
+        if (occ.httpSource.decodedText) {
+          signals.push({ type: 'decoded-invisible-text', severity: 'high', detail: `Invisible characters decode to: ${occ.httpSource.decodedText}` });
+        }
+      }
+      if (occ.httpSource.hiddenHints && occ.httpSource.hiddenHints.length && (occ.httpSource.extractionKind || occ.httpSource.kind) === 'element') {
         signals.push({ type: 'hidden-in-source', severity: 'medium', detail: `Hidden hints in raw markup: ${occ.httpSource.hiddenHints.join(', ')}` });
       }
     }
@@ -166,7 +270,10 @@ async function analyze(url, capabilityKey = 'summary-only') {
       if (!occ.renderedDom.visible) {
         signals.push({ type: 'render-hidden', severity: 'high', detail: `Invisible after rendering: ${occ.renderedDom.hiddenReasons.join('; ')}` });
       }
-      if (occ.renderedDom.zeroWidth) signals.push({ type: 'zero-width-chars', severity: 'high', detail: 'Contains zero-width/invisible Unicode characters.' });
+      if (occ.renderedDom.zeroWidth) signals.push({ type: 'invisible-unicode', severity: 'high', detail: 'Contains invisible Unicode characters in the rendered DOM.' });
+      if (occ.renderedDom.nearInvisibleReasons && occ.renderedDom.nearInvisibleReasons.length) {
+        signals.push({ type: 'near-invisible', severity: 'high', detail: `Barely visible to a human: ${occ.renderedDom.nearInvisibleReasons.map((r) => `near-invisible: ${r}`).join('; ')}.` });
+      }
     }
     if (occ.httpSource && occ.renderedDom && !occ.renderedDom.visible && (occ.readerMarkdown || occ.accessibilityTree)) {
       signals.push({ type: 'ai-visible-human-invisible', severity: 'high', detail: 'Invisible to humans, but picked up by reader/a11y pipelines an agent may use.' });
@@ -182,16 +289,21 @@ async function analyze(url, capabilityKey = 'summary-only') {
     const delivery = detectDelivery(occ, humanVisible);
     // The segment-level impact model owns the decision: level, intents,
     // addressed-to-AI, discount, and the explanation the UI shows.
+    //
+    // We hand it the PRESERVED ORIGINAL evidence, never the deduplication key:
+    // the group key is normalized (invisible characters already stripped), and
+    // passing that would destroy the very evidence the normalizer must decode.
+    const evidenceText = g.originalText;
     const assessment = assessSegment(
       {
-        text: g.text,
+        text: evidenceText,
         humanVisible,
         delivery,
         inCodeOrQuote: detectInCodeOrQuote(occ),
       },
       capabilityKey,
     );
-    const legacyMatches = analyzeInstruction(g.text, inQuotedMarkup);
+    const legacyMatches = analyzeInstruction(evidenceText, inQuotedMarkup);
     const intents = assessment.intents.length ? assessment.intents : legacyMatches.map((m) => m.type);
     const primaryIntent = assessment.primaryIntent || (intents.length ? intents[0] : null);
     const quotedContext = assessment.intents.length
@@ -210,8 +322,8 @@ async function analyze(url, capabilityKey = 'summary-only') {
     }
 
     // evidence tier: kept for the UI and for the cloaking finding
-    const hasStrongDelivery = signals.some((s) => ['html-comment', 'zero-width-chars', 'render-hidden', 'ai-visible-human-invisible'].includes(s.type));
-    const hasWeakDelivery = signals.some((s) => ['hidden-in-source', 'raw-only', 'meta-tag'].includes(s.type));
+    const hasStrongDelivery = signals.some((s) => ['html-comment', 'invisible-unicode', 'render-hidden', 'near-invisible', 'attribute-value', 'ai-visible-human-invisible'].includes(s.type));
+    const hasWeakDelivery = signals.some((s) => ['hidden-in-source', 'raw-only', 'meta-tag', 'inert-template', 'noscript-content'].includes(s.type));
     let evidenceTier = 0;
     if (instruction) evidenceTier = 1;
     if (instruction && (hasStrongDelivery || hasWeakDelivery)) evidenceTier = 3;
@@ -224,8 +336,13 @@ async function analyze(url, capabilityKey = 'summary-only') {
     if (interesting) {
       findings.push({
         id: 'F' + ++fid,
-        excerpt: excerpt(g.text),
-        fullText: g.text.length <= 600 ? g.text : g.text.slice(0, 600) + '…',
+        excerpt: excerpt(evidenceText),
+        fullText: evidenceText.length <= 600 ? evidenceText : evidenceText.slice(0, 600) + '…',
+        // Original evidence and the normalized comparison key are both kept, so
+        // the UI can show what the page actually contains.
+        originalText: evidenceText,
+        normalizedText: g.normalizedText,
+        occurrences: occ.occurrences,
         humanVisible,
         delivery,
         aiProfiles,
@@ -245,7 +362,7 @@ async function analyze(url, capabilityKey = 'summary-only') {
     if (interesting || aiProfiles.length >= 2 || (occ.httpSource && occ.renderedDom)) {
       matrix.push({
         key: g.key.slice(0, 60),
-        excerpt: excerpt(g.text),
+        excerpt: excerpt(evidenceText),
         humanVisible,
         delivery,
         httpSource: !!occ.httpSource,
@@ -254,6 +371,8 @@ async function analyze(url, capabilityKey = 'summary-only') {
         accessibilityTree: !!occ.accessibilityTree,
         findingId: interesting ? 'F' + fid : null,
         instruction: instruction ? instruction.type : null,
+        extractionKinds: Array.from(new Set(occ.occurrences.map((o) => o.extractionKind))),
+        paths: Array.from(new Set(occ.occurrences.map((o) => o.path).filter(Boolean))),
       });
     }
   }
@@ -304,8 +423,11 @@ async function analyze(url, capabilityKey = 'summary-only') {
       readerSegments: (reader.segments || []).length,
       a11yNodes: a11y.length,
       cloakingDetected: !!cloak,
+      blockedSubrequests: policy.blockedRequests.length,
     },
     cloak,
+    uaProbe,
+    blockedRequests: policy.blockedRequests.slice(),
     findings,
     levelCount,
     matrix,
