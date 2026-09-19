@@ -17,7 +17,7 @@ that require you: your accounts, your words, your decisions, and every Git opera
 | --- | --- | --- | --- |
 | 1 | Read the README end to end. Correct anything that is not true of your project, and adjust tone. | `README.md` | ☐ |
 | 2 | Verify every factual claim you intend to defend on camera. The evidence pointer for each is in the *Verification status* table at the end of the README. | `README.md` | ☐ |
-| 3 | Read the Devpost copy and fill in the three `[TO FILL — OWNER]` sections **in your own words**: the inspiration, two or three challenges, and what you learned. | `submission/devpost.md` | ☐ |
+| 3 | Read the integrated personal narrative and confirm it is really your voice: **Inspiration**, **Challenges we ran into**, **What we learned**, and the **What was mine** paragraph in the AI disclosure. Correct the wording freely — it is your submission. | `submission/devpost.md` | ☐ |
 | 4 | Read the video script once aloud with a timer. If any sentence feels unnatural in your voice, rewrite it — it is your video. | `submission/video-script.md` | ☐ |
 | 5 | Confirm the source list and attributions are ones you are comfortable publishing. | `README.md` → *Data attribution and licence* | ☐ |
 | 6 | **Choose a licence.** Currently stated as "not yet chosen". Candidates: `MIT`, `Apache-2.0`, or `MIT` for code plus `CC-BY-4.0` for docs. Note that the project excludes CC-BY-NC upstream data, so a non-commercial licence on your own code is a choice you would have to justify. | new `LICENSE` file + `README.md` | ☐ |

@@ -1,9 +1,10 @@
 # Devpost submission copy — InjectionLens
 
-> **How to use this file.** Everything below is either (a) verified by a file in
-> `injectionlens/eval/results/`, or (b) explicitly marked as the owner's own words.
-> Replace every `[TO FILL — …]` placeholder with your own writing before submitting.
-> Do not paste the angle-bracket instructions into Devpost.
+> **How to use this file.** Every number below is verified by a file in
+> `injectionlens/eval/results/`. The personal narratives are the owner's own words and are already
+> in place. The only `[TO FILL — OWNER]` markers left are owner-only fields that cannot be written
+> by anyone else — the repository URL, the video URL, and the licence decision — plus the
+> placeholder inside the four protected planning documents at the repository root.
 >
 > **Honesty rule that governs this copy:** detection is not prevention. Say *surfaces*,
 > *detects*, *shows*, *explains*, *reduces risk* — never *prevents*, *solves* or *guarantees*.
@@ -20,18 +21,23 @@ Attackers have started writing instructions to AI agents inside ordinary web pag
 InjectionLens shows what each kind of agent would ingest from a page — including what humans
 cannot see — and which of those instructions could reach real damage.
 
-## Inspiration — `[TO FILL — OWNER: write this in your own words]`
+## Inspiration
 
-Prompts for what belongs here (say it your way, and do not copy the source documents verbatim):
+Prompt injection caught my attention because its potential impact extends far beyond a single
+chatbot. As AI agents increasingly interact with websites, retrieve information, and perform actions
+on behalf of users, untrusted web content can become a way to influence their behavior.
 
-* What you noticed while reading the 2026 reports that made you pick this problem — that the
-  attacks already exist on real pages rather than being a theoretical concern, and that the
-  industry's answer so far returns a verdict without saying *which part of the page* caused it.
-* Why you chose this over the direction an AI assistant recommended to you (the safer, smaller
-  idea) — this is already documented honestly in `InjectionLens-Design-and-Decision-Log.md` §2,
-  so you can summarise it there in one or two sentences.
-* The moment the problem became concrete for you: a page that reads as harmless to a human and as
-  an instruction to a machine.
+I knew that a 24-hour hackathon would not be enough to solve such a broad security problem, and I did
+not want to pretend otherwise. Instead, I saw it as an opportunity to learn by building: to explore
+how indirect prompt injection actually works, understand where existing ingestion pipelines may
+expose AI agents to malicious instructions, and turn that understanding into something concrete.
+
+InjectionLens grew out of that curiosity. Rather than attempting to build a universal defense, I
+focused on making hidden instructions visible, tracing where they came from, and explaining why their
+risks depend on what an AI agent can actually do.
+
+For me, the goal was not to solve the entire problem in one weekend, but to make a small,
+evidence-backed contribution while learning how to approach a much larger one.
 
 ## What it does
 
@@ -108,29 +114,38 @@ strong recall story, and the matrix is provisional because the upstream corpus h
 under a strict licence reading, zero records would be eligible, so the measured run uses a
 documented-source-map reading (551 eligible records; 84 CC-BY-NC records excluded).
 
-## Challenges we ran into — `[TO FILL — OWNER: pick two or three and tell them your way]`
+## Challenges we ran into
 
-Candidates that are already documented with evidence, so nothing here is invented:
+One of the biggest challenges was that a web page does not look the same to every AI agent. Raw HTML,
+rendered DOM, Reader/Markdown output, and accessibility information can expose different content. We
+had to preserve the source, location, and ingestion path of each suspicious instruction instead of
+reducing everything to a single text string.
 
-* **The detector was generated in about half an hour, and it showed.** The first version rated an
-  ordinary "visit us at …" line as severe, and dropped a hidden exfiltration instruction to low risk
-  as soon as the words "for example" were added. Two words were enough to defeat it. That audit
-  result is what set the whole plan for the remaining time.
-* **Hidden-ness is the wrong signal.** Rebuilding the fixtures from the published reports showed
-  that most real payloads are visible plaintext, and that HTML attributes — which text-only scanners
-  often never read — were about a fifth of delivery methods. The model had to be re-centred on
-  who is being addressed and what the reader can do, with hidden-ness demoted to a boosting signal.
-* **Coverage is not detection.** Early on, a pipeline that simply never read a payload looked like a
-  detection failure. The evaluation now reports both numbers — detection where the pipeline observed
-  the payload, and detection over all cells — instead of quietly flattering itself.
-* **A defence that must not become a weapon.** The tool fetches untrusted pages, so the analyser is
-  itself an attack surface. That is why analysis is deny-by-default, why UA probing never leaves the
-  local fixture origin without explicit permission, and why the decoded prompt of an AI-summary link
-  is analysed as text and never followed.
-* **A known defect we chose to report rather than hide.** Two normalisers in the codebase strip
-  different sets of invisible characters, so payloads using the extra ones do not group with their
-  own unobfuscated text. It is measured (`T0-original` 26.0% vs `T2f-separator-inject` 18.2%), it is
-  pinned by a test, and it is documented as unfixed rather than quietly patched to flatter a number.
+Another challenge was making risk assessment sensitive to agent capabilities. An instruction asking an
+assistant to make a payment has different implications for a summarization-only agent and an agent
+that can perform transactions. Designing and testing these distinctions required more than simply
+matching suspicious keywords.
+
+Unicode obfuscation introduced another difficulty. During evaluation, we discovered that different
+normalization paths could cause obfuscated instructions to be grouped incorrectly and reduce
+detection coverage. We documented the limitation rather than claiming complete protection.
+
+The evaluation process also challenged our assumptions. We caught a denominator error in which eight
+benign control observations had been included in attack-detection statistics. We corrected the
+aggregation using the preserved raw observations and added regression tests.
+
+These experiences reinforced the importance of preserving evidence, validating assumptions, and
+reporting limitations honestly.
+
+Two further incidents from the audit that are documented with evidence:
+
+* **The first detector was AI-generated in about half an hour, and it showed.** It rated an ordinary
+  "visit us at …" line as severe, and dropped a hidden exfiltration instruction to low risk as soon
+  as the words "for example" were added. Two words were enough to defeat it. That audit result is
+  what set the plan for the remaining time.
+* **Coverage is not detection.** Early on, a pipeline that simply never read a payload looked
+  identical to a detection failure. The evaluation now reports both numbers — detection where the
+  pipeline observed the payload, and detection over all cells — instead of quietly flattering itself.
 
 ## Accomplishments we are proud of
 
@@ -148,12 +163,24 @@ Candidates that are already documented with evidence, so nothing here is invente
   reading visible beside the corrected one, and added regression tests — instead of quietly
   restating the number.
 
-## What we learned — `[TO FILL — OWNER: two or three sentences in your own voice]`
+## What we learned
 
-Candidates: that detection is not prevention and saying so is a strength rather than a weakness;
-that an honest negative result (a low detection rate, an unrun measurement) is worth more to a
-reviewer than a flattering one; and that the hard part of this problem is not finding scary words
-but deciding what an instruction is worth *to a specific reader*.
+This project changed how I understand prompt injection. Before building InjectionLens, I primarily
+thought of it as a problem of malicious instructions hidden in content. During development, I learned
+that the ingestion path, the location of the instruction, and the capabilities of the receiving agent
+can all affect the resulting risk.
+
+I also gained a much deeper appreciation for the engineering behind security evaluation. Writing a
+detector is only one part of the work. Building reproducible fixtures, tracing evidence across
+multiple pipelines, handling malformed and obfuscated inputs, defining meaningful metrics, and
+checking the evaluation itself are equally important.
+
+Perhaps the most valuable lesson was learning to distinguish between a tool that detects a potential
+attack and a system that actually prevents one. Passing local tests does not establish real-world
+effectiveness, and an unexplained percentage is not automatically reliable evidence.
+
+A 24-hour project cannot answer every question, but it can reveal which questions matter.
+InjectionLens gave me a practical starting point for continuing to explore AI-agent security.
 
 ## What's next
 
@@ -184,26 +211,38 @@ but deciding what an instruction is worth *to a specific reader*.
 
 > **AI & External Tools Disclosure**
 >
-> **ChatGPT** — used for pre-event preparation only, before the permitted start
-> (2026-09-19 22:00 UTC+8). It proposed three candidate directions (I chose InjectionLens over the
-> one it recommended), researched existing prompt-injection defences and products, and revised the
-> design after I challenged its first draft. It wrote no project code.
+> AI tools were used extensively throughout this project. My role was to guide it; the implementation
+> was AI-assisted, and I do not present it as entirely hand-written code.
 >
-> **Kimi coding agent** — after the start, generated the initial MVP scaffold (four ingestion
-> pipelines, the React UI, the first seven test pages) from a scope I had fixed before the event.
-> This revision is tagged `v0-ai-scaffold`.
+> **ChatGPT** — supported early planning and technical discussions, before the permitted start
+> (2026-09-19 22:00 UTC+8). It proposed three candidate directions (I chose InjectionLens over the one
+> it recommended), researched existing prompt-injection defences and products, and revised the design
+> after I challenged its first draft. It wrote no project code.
 >
-> **DeepSeek (coding agent)** — implemented the subsequent work under stage-gated instructions:
-> the corrections to the risk model, the ingestion and network-guard rework, the two P1 channel
-> checks, the deterministic replica runner, the evaluation harness and the documentation. Every
-> claim it produced had to be backed by a file in `injectionlens/eval/results/`.
+> **Kimi coding agent** — helped generate the initial scaffold after the start: four ingestion
+> pipelines, the React UI, and the first seven test pages, built from a scope I had fixed before the
+> event. This revision is tagged `v0-ai-scaffold`.
 >
-> **Claude** — researched 2025–2026 incident reports and ran adversarial tests against the
-> generated detector, which is what surfaced the false positives and the two-word bypass.
+> **DeepSeek (coding agent)** — served as the primary coding agent for the subsequent implementation,
+> testing, evaluation tooling, and documentation: the corrections to the risk model, the ingestion and
+> network-guard rework, the two P1 channel checks, the deterministic replica runner, and the
+> evaluation harness. It worked under stage-gated instructions, and every claim it produced had to be
+> backed by a file in `injectionlens/eval/results/`.
 >
-> **What was mine:** the choice of problem, the scope, the design trade-offs, the direction and
-> supervision of every stage, the integration, and the validation. I reviewed the generated code
-> and can explain every module.
+> **Claude** — contributed adversarial review and testing feedback: it researched 2025–2026 incident
+> reports and ran adversarial tests against the generated detector, which is what surfaced the false
+> positives and the two-word bypass.
+>
+> **What was mine:** I directed the project scope, selected the problem and technical priorities,
+> made implementation and time-management decisions, reviewed the development results, and
+> coordinated the integration, validation, and submission preparation.
+>
+> My role was to guide the project, evaluate trade-offs, review the evidence, identify issues
+> requiring attention, and make decisions about what to implement, defer, or disclose. I reviewed
+> the generated code and can explain every module.
+>
+> The contribution lies in the resulting tool, its documented engineering decisions, its reproducible
+> evidence, and a transparent account of both its capabilities and limitations.
 >
 > `[TO FILL — OWNER: add anything else you used, or state plainly that the list above is complete.]`
 
