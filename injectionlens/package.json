@@ -1,0 +1,21 @@
+{
+  "name": "injectionlens",
+  "version": "0.1.0",
+  "private": true,
+  "description": "InjectionLens — see what the AI sees that you do not. Cross-ingestion prompt-injection forensics for web pages.",
+  "scripts": {
+    "dev": "concurrently -k -n server,client \"node --watch server/index.js\" \"npm --prefix client run dev\"",
+    "dev:server": "node --watch server/index.js",
+    "dev:client": "npm --prefix client run dev",
+    "start": "node server/index.js"
+  },
+  "dependencies": {
+    "@mozilla/readability": "^0.5.0",
+    "concurrently": "^9.0.1",
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "jsdom": "^25.0.1",
+    "playwright-core": "^1.47.2",
+    "turndown": "^7.2.0"
+  }
+}

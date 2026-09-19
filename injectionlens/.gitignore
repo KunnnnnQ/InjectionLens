@@ -1,0 +1,7 @@
+node_modules/
+client/node_modules/
+shots/
+*.log
+.tmp-*.json
+dist/
+.DS_Store
