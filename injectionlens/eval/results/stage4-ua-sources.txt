@@ -1,0 +1,89 @@
+AI-AGENT USER-AGENT INVENTORY — VERIFICATION RECORD
+===================================================
+Project: InjectionLens · Step 5 / Project Stage 4, Part 1
+Retrieved during this run. Local-fixture result = whether the cloaking fixture
+served the AI-only document when probed with that exact token (test/ua-inventory.test.js).
+
+SOURCE STATUS RULES APPLIED
+---------------------------
+vendor-primary verified      The exact token AND its category were read from an
+                             accessible official vendor source during this run.
+secondary-source corroborated The token was found only in third-party sources
+                             (Cloudflare documentation, search results).
+unverified in this run       The primary source was inaccessible and independent
+                             support was insufficient.
+
+WHAT WAS ACTUALLY RETRIEVABLE
+-----------------------------
+1. Anthropic — primary source ACCESSIBLE (HTTP 200):
+   "Does Anthropic crawl data from the web, and how can site owners block the crawler?"
+   https://privacy.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler
+   (reached after the support.anthropic.com URL redirected to privacy.claude.com)
+   Documented as three robots with these stated uses:
+     ClaudeBot        — "collecting web content that could potentially contribute
+                         to their training"                       -> training
+     Claude-User      — "supports Claude AI users ... user-initiated requests"
+                                                                  -> user-triggered
+     Claude-SearchBot — "navigates the web to improve search result quality"
+                                                                  -> search
+   Date shown on the page: April 7, 2026.
+
+2. OpenAI — primary source NOT accessible:
+   https://developers.openai.com/api/docs/bots       -> HTTP 403 "This request was blocked"
+   https://developers.openai.com/api/docs/bots.md    -> HTTP 403
+   https://platform.openai.com/docs/bots             -> HTTP 403 (Cloudflare challenge)
+   Machine-readable endpoints https://openai.com/gptbot.json and
+   https://openai.com/searchbot.json returned HTTP 200, but they contain only IP
+   ranges, NOT User-Agent tokens, so they do not verify any token.
+   No attempt was made to defeat the vendor's bot protection.
+
+3. Perplexity — primary source NOT accessible:
+   https://docs.perplexity.ai/docs/resources/perplexity-crawlers -> fetch failed
+   https://www.perplexity.ai/hub/technical-faq/...                -> fetch failed
+
+4. Third-party corroboration used for the OpenAI and Perplexity tokens:
+   Cloudflare AI Crawl Control — Bot reference (last updated Apr 23, 2026)
+   https://developers.cloudflare.com/ai-crawl-control/reference/bots/
+   It was also used to cross-check the Anthropic tokens (same three, same string
+   forms) and notably classifies PerplexityBot as "AI Search" rather than training.
+
+NOT DONE, ON PURPOSE
+--------------------
+No complete User-Agent strings were invented. Only the documented TOKEN is stored
+and sent. A real client usually embeds the token inside a longer
+"Mozilla/5.0 (compatible; <TOKEN>/<version>; +<url>)" string; because that full
+string is not published by the vendors, the probe sends the bare token and the
+code says so (server/lib/ingest.js).
+
+No crawler or AI-fetcher User-Agent was sent to any third-party host. Every probe
+below ran against the local fixture server only.
+
+INVENTORY
+---------
+token             | vendor     | category       | source status                  | local fixture
+------------------+------------+----------------+--------------------------------+--------------
+GPTBot            | OpenAI     | training       | secondary-source corroborated  | reacts (AI doc)
+ChatGPT-User      | OpenAI     | user-triggered | secondary-source corroborated  | reacts (AI doc)
+OAI-SearchBot     | OpenAI     | search         | secondary-source corroborated  | reacts (AI doc)
+ClaudeBot         | Anthropic  | training       | vendor-primary verified        | reacts (AI doc)
+Claude-User       | Anthropic  | user-triggered | vendor-primary verified        | reacts (AI doc)
+Claude-SearchBot  | Anthropic  | search         | vendor-primary verified        | reacts (AI doc)
+PerplexityBot     | Perplexity | search         | secondary-source corroborated  | reacts (AI doc)
+Perplexity-User   | Perplexity | user-triggered | secondary-source corroborated  | reacts (AI doc)
+
+Category note: Perplexity is listed as "search" for PerplexityBot following
+Cloudflare's classification, because Perplexity's own page could not be read in
+this run. Perplexity's own documentation may describe it differently.
+
+CORRECTNESS FIX IN THIS STEP
+----------------------------
+Google-Extended was removed from HTTP User-Agent matching. It is a robots.txt
+product token, not an HTTP request User-Agent. The fixture server now decides
+purely on `detectCrawlerToken()`, and test/ua-inventory.test.js asserts that
+Google-Extended (and unrelated agents such as Bytespider) do NOT receive the
+AI-only variant while all eight tokens above DO.
+
+Evidence:
+  test/ua-inventory.test.js              — inventory, provenance fields, fixture reaction
+  eval/results/stage4-smoke.txt          — 8/8 probes per fixture, trigger token named
+  eval/results/stage4-ui-verification.txt — UI run
