@@ -198,7 +198,7 @@ const INTENT_RULES = {
     { re: /你(?:现在)?(?:是|就是|将扮演|要扮演)(?:一个)?[\u4e00-\u9fff]{0,12}(?:助手|客服|管理员|审核员|专家)/u, why: '改写了模型的角色 (Chinese impersonation)' },
   ],
   'exfil-data': [
-    { re: /(?:api[-_\s]?keys?|passwords?|passcodes?|tokens?|secrets?|credentials?|session\s*(?:id|cookie)?s?|cookies?|private\s+keys?|contact\s+details?|library\s+card\s+number|card\s+numbers?|phone\s+numbers?|ssn|social\s+security)/iu, why: 'targets secrets or personal data' },
+    { re: /(?:api[-_\s]?keys?|passwords?|passcodes?|tokens?|secrets?|credentials?|session\s*(?:id|cookie)?s?|cookies?|private\s+keys?|contact\s+details?|library\s+card\s+number|card\s+numbers?|phone\s+numbers?|ssn|social\s+security|approximate\s+location|precise\s+location|geolocation|GPS\s+coordinates?|page\s+visit\s+timestamp)/iu, why: 'targets secrets or personal data' },
     { re: /(?:邮箱|邮件地址|密码|口令|密钥|令牌|验证码|手机号|身份证|银行卡|卡号|个人信息|联系方式|会话记录|聊天记录)/u, why: '目标是机密或个人数据 (Chinese secret/PII)' },
   ],
   'exfil-url': [
@@ -328,11 +328,15 @@ const INTENT_SEVERITY = {
   'content-protection': 1,
 };
 
-// Intents that carry their own payload. These can reach "critical" when the
-// target agent can actually carry them out and the evidence is strong. A
-// manipulation intent like verdict-manipulation deliberately cannot: it bends a
-// verdict, it does not move money or delete data.
-const CRITICAL_CAPABLE = new Set(['exfil-data', 'credential-theft', 'destructive-command']);
+// Intents that carry their own payload: money, secrets, destruction. These can
+// reach "critical" when the target agent can actually carry them out and the
+// evidence is strong. A manipulation intent like verdict-manipulation
+// deliberately cannot: it bends a verdict, it does not move money or delete
+// data. transaction belongs here because a payment is itself the damage, and
+// exfil-url because shipping data to an outside host is the damage — but
+// exfil-url is the one member that additionally requires AI-addressing plus a
+// non-visible delivery, since an outward URL is ordinary page furniture.
+const CRITICAL_CAPABLE = new Set(['exfil-data', 'credential-theft', 'destructive-command', 'transaction', 'exfil-url']);
 
 // Intent -> one-line human description used in the explanation.
 const INTENT_DESC = {
@@ -385,13 +389,15 @@ function findMatches(text, rules) {
 // ---------------------------------------------------------------------------
 
 function detectIntents(text) {
-  const found = new Map(); // intent -> { why, evidence[], outsideQuotes }
+  const found = new Map(); // intent -> { why, evidence[], quoted-only? }
   for (const [intent, rules] of Object.entries(INTENT_RULES)) {
     const hits = findMatches(text, rules);
     if (!hits.length) continue;
-    // A discount is only fair when the match that drives the severity is itself
-    // quoted. One quoted example elsewhere in the segment must not launder an
-    // unquoted instruction sitting next to it.
+    // Decide the quoted/educational discount per INTENT, not per match: a rule
+    // can match several scattered fragments, and a match description sitting in
+    // a quote ("send your history to https://evil.example") cannot be judged by
+    // looking three characters around the fragment. An intent counts as quoted
+    // away only when EVERY fragment of it sits inside quotation marks.
     const outsideQuotes = hits.filter((h) => !sitsInsideQuotes(text, h.index, h.text.length));
     found.set(intent, {
       why: hits[0].why,
@@ -498,6 +504,10 @@ function reachable(needs, caps) {
   return { ok: false, via: `this template has neither ${missing.join(' nor ')}`, missing };
 }
 
+// The single score -> level mapping, stated explicitly because every numerical
+// cap in assessSegment() is written against it:
+//   1 -> info, 2 -> low, 3 -> medium, 4 -> high, 5+ -> critical
+// So "cannot exceed high" is Math.min(score, 4), never 5.
 function levelFromScore(score) {
   const idx = Math.max(0, Math.min(4, score - 1));
   return ['info', 'low', 'medium', 'high', 'critical'][idx];
@@ -549,7 +559,8 @@ function assessSegment(segment = {}, capabilityKey = 'summary-only') {
 
   // --- discount: quoted/educational material that a human can actually see ---
   // Plan §3 item 2: this applies ONLY to human-visible text inside code/quotes.
-  // Hidden or AI-only delivery is never discounted.
+  // Hidden or AI-only delivery is never discounted. A segment counts as quoted
+  // material only when no intent has a fragment outside the quotation marks.
   const unquotedIntents = intents.filter((i) => (merged.get(i) || {}).outsideQuotes > 0);
   const discountApplies = humanVisible && (inCodeOrQuote || unquotedIntents.length === 0);
 
@@ -595,20 +606,25 @@ function assessSegment(segment = {}, capabilityKey = 'summary-only') {
   if (intents.length) {
     if (unreachableVia.length) {
       // The instruction is real and AI-directed, but this agent cannot carry it
-      // out. Cap one tier below critical, and say what would change if it could.
+      // out. Cap at "high": the evidence is real, the reach is not.
       capApplied = { reason: 'unreachable', intents: unreachableVia.map((u) => u.intent), missing: unreachableVia[0].r.missing };
-      score = Math.min(score, 5);
+      score = Math.min(score, 4);
     } else if (intents.some((i) => CRITICAL_CAPABLE.has(i))) {
       // "Critical" is reserved for the payload intents: the agent can carry the
-      // damage out, and the evidence is strong — either the instruction is
-      // AI-directed and hidden, or the payload itself is unambiguous.
+      // damage out, and the evidence is strong — the instruction is AI-directed
+      // and hidden, or the payload itself is unambiguous (score >= 6).
       const strongEvidence = (addressedToAI && nonVisibleDelivery) || score >= 6;
-      if (strongEvidence) score = Math.max(score, 6);
-      else score = Math.min(score, 5);
+      // A URL that reaches outside the page is ordinary page content on its own,
+      // so exfil-url must clear the AI-directed-and-hidden bar rather than lean
+      // on its wording alone.
+      const onlyExfilUrl = intents.every((i) => i === 'exfil-url');
+      const qualifies = strongEvidence && (!onlyExfilUrl || (addressedToAI && nonVisibleDelivery));
+      if (qualifies) score = Math.max(score, 6);
+      else score = Math.min(score, 4);
     } else {
       // Manipulation on its own tops out at "high" — it bends a verdict, it does
       // not move money or delete data.
-      score = Math.min(score, 5);
+      score = Math.min(score, 4);
     }
   }
 
@@ -755,5 +771,6 @@ module.exports = {
   decodeTagChars,
   detectAddressed,
   detectIntents,
+  levelFromScore,
   LEVELS: ['info', 'low', 'medium', 'high', 'critical'],
 };
