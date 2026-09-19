@@ -1,0 +1,47 @@
+
+> injectionlens@0.1.0 test
+> node --test "test/**/*.test.js"
+
+✔ zero-width separators are stripped and reported (2.4404ms)
+✔ bidi controls and soft hyphens are stripped and reported (0.2101ms)
+✔ Cyrillic and Greek homoglyphs are mapped to Latin and reported (0.1774ms)
+✔ Unicode tag characters are decoded to ASCII and reported (0.352ms)
+✔ decodeTagChars round-trips ASCII (0.3914ms)
+✔ short or stray tag runs are not reported as a decoded message (0.9425ms)
+✔ NFKC folds compatibility forms (0.2188ms)
+✔ plain ASCII text is left alone (0.1525ms)
+✔ non-string input does not throw (0.149ms)
+✔ manipulation-only stays at or below high even when AI-addressed and hidden (27.3157ms)
+✔ authority-framing outranks no payload intent, so it cannot reach critical (0.4298ms)
+✔ a payload this capability cannot carry out stays at or below high (2.055ms)
+✔ the reachability cap does not swallow the intent itself (0.3892ms)
+✔ a reachable payload without strong evidence stays at or below high (0.6527ms)
+✔ an outward URL in visible user-to-user prose is not an instruction at all (0.2378ms)
+✔ an AI-directed hidden exfil-url is still allowed to reach critical (0.2582ms)
+✔ a strong reachable payload still reaches critical (0.3593ms)
+✔ a strong AI-directed payment reaches critical only when the capability can pay (0.409ms)
+✔ a weak payment mention does not make every agent critical (0.4045ms)
+✔ score to level mapping is the one the numerical caps are written against (1.3002ms)
+✔ the level scale used by the caps has not been renumbered (0.1195ms)
+✔ benign hard negatives stay <= low (38.2932ms)
+✔ B5 content-protection notice is classified as content-protection (0.367ms)
+✔ B7 quoted material is marked as discounted (0.4416ms)
+✔ attacks are scored at the expected level or above (3.05ms)
+✔ A2 "for example" prefix must not discount hidden content (0.388ms)
+✔ A5 addressed-to-AI phrasing is detected (0.3083ms)
+✔ A6 addressedToAI is true (0.2476ms)
+✔ A7 carries the destructive-command intent (0.3435ms)
+✔ A8 carries the transaction intent (0.3752ms)
+✔ A9 carries the verdict-manipulation intent (0.5467ms)
+✔ A10 carries the authority-framing intent (0.3483ms)
+✔ A15 tag-character payload is scored high or above and decoded in the explanation (0.4373ms)
+✔ assessSegment returns the documented shape for every capability key (0.5652ms)
+✔ level helpers behave as documented (1.299ms)
+ℹ tests 35
+ℹ suites 0
+ℹ pass 35
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 165.1853
