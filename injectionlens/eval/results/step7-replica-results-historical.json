@@ -1,0 +1,501 @@
+{
+  "artifact": "step7-replica-results-historical.json",
+  "step": "Human Step 7 — integrated source-backed replica suite",
+  "generated_at": "2026-09-19T20:24:27.435Z",
+  "result_status": "OK",
+  "how_produced": "node scripts/run-fixtures.js --json eval/tmp/step7/replica-run.json",
+  "summary": {
+    "total": 8,
+    "executed": 7,
+    "pass": 7,
+    "fail": 0,
+    "skipped": 1,
+    "error": 0,
+    "skippedExcludingFiltered": 1,
+    "bySkipCode": {
+      "known-gap": 1
+    }
+  },
+  "cases": [
+    {
+      "id": "unit42-scam-ad-review",
+      "status": "pass",
+      "file": "replica-scam-ad-review.html",
+      "source": {
+        "label": "Unit 42 - AI agent prompt injection on real web pages",
+        "date": "2026-03-03",
+        "url": "https://unit42.paloaltonetworks.com/ai-agent-prompt-injection/"
+      },
+      "title": "Scam-ad review manipulation across attribute, visible footer and JSON-LD",
+      "primary_capability": "decision-agent",
+      "observed": {
+        "primaryCapability": "decision-agent",
+        "maxLevel": "high",
+        "levels": {
+          "info": 4,
+          "low": 0,
+          "medium": 0,
+          "high": 4,
+          "critical": 0
+        },
+        "intents": [
+          "task-override",
+          "verdict-manipulation"
+        ],
+        "pipelines": {
+          "http-source": 19,
+          "rendered-dom": 10,
+          "reader-markdown": 4,
+          "accessibility-tree": 20
+        },
+        "cloaking": null,
+        "uaProbe": {
+          "probed": 8,
+          "skipped": 0,
+          "triggerToken": null
+        },
+        "blockedRequests": 0,
+        "checks": {
+          "evidence": {
+            "passed": 5,
+            "total": 5
+          },
+          "pipelines": {
+            "passed": 3,
+            "total": 3
+          },
+          "intents": {
+            "passed": 1,
+            "total": 1
+          },
+          "capabilities": {
+            "passed": 5,
+            "total": 5
+          }
+        }
+      },
+      "skip_reason": null,
+      "known_gap": null,
+      "failures": []
+    },
+    {
+      "id": "forcepoint-5000-payment",
+      "status": "pass",
+      "file": "replica-payment-5000.html",
+      "source": {
+        "label": "Forcepoint X-Labs - 10 live indirect prompt injection payloads",
+        "date": "2026-04-22",
+        "url": "https://www.forcepoint.com/blog/x-labs/indirect-prompt-injection-payloads"
+      },
+      "title": "Five thousand dollar payment instruction in page prose and in an accessibility label",
+      "primary_capability": "browser-agent",
+      "observed": {
+        "primaryCapability": "browser-agent",
+        "maxLevel": "critical",
+        "levels": {
+          "info": 2,
+          "low": 0,
+          "medium": 0,
+          "high": 1,
+          "critical": 1
+        },
+        "intents": [
+          "transaction"
+        ],
+        "pipelines": {
+          "http-source": 14,
+          "rendered-dom": 10,
+          "reader-markdown": 7,
+          "accessibility-tree": 19
+        },
+        "cloaking": null,
+        "uaProbe": {
+          "probed": 8,
+          "skipped": 0,
+          "triggerToken": null
+        },
+        "blockedRequests": 0,
+        "checks": {
+          "evidence": {
+            "passed": 5,
+            "total": 5
+          },
+          "pipelines": {
+            "passed": 4,
+            "total": 4
+          },
+          "intents": {
+            "passed": 1,
+            "total": 1
+          },
+          "capabilities": {
+            "passed": 5,
+            "total": 5
+          }
+        }
+      },
+      "skip_reason": null,
+      "known_gap": null,
+      "failures": []
+    },
+    {
+      "id": "forcepoint-rm-rf",
+      "status": "pass",
+      "file": "replica-rm-rf.html",
+      "source": {
+        "label": "Forcepoint X-Labs - payloads targeting AI coding tools",
+        "date": "2026-04-22",
+        "url": "https://www.forcepoint.com/blog/x-labs/indirect-prompt-injection-payloads"
+      },
+      "title": "Inert recursive-delete instruction aimed at a coding agent",
+      "primary_capability": "coding-agent",
+      "observed": {
+        "primaryCapability": "coding-agent",
+        "maxLevel": "critical",
+        "levels": {
+          "info": 2,
+          "low": 1,
+          "medium": 0,
+          "high": 0,
+          "critical": 1
+        },
+        "intents": [
+          "destructive-command"
+        ],
+        "pipelines": {
+          "http-source": 16,
+          "rendered-dom": 13,
+          "reader-markdown": 11,
+          "accessibility-tree": 30
+        },
+        "cloaking": null,
+        "uaProbe": {
+          "probed": 8,
+          "skipped": 0,
+          "triggerToken": null
+        },
+        "blockedRequests": 0,
+        "checks": {
+          "evidence": {
+            "passed": 5,
+            "total": 5
+          },
+          "pipelines": {
+            "passed": 4,
+            "total": 4
+          },
+          "intents": {
+            "passed": 1,
+            "total": 1
+          },
+          "capabilities": {
+            "passed": 5,
+            "total": 5
+          }
+        }
+      },
+      "skip_reason": null,
+      "known_gap": null,
+      "failures": []
+    },
+    {
+      "id": "unit42-offscreen-hiring",
+      "status": "pass",
+      "file": "replica-hiring-offscreen.html",
+      "source": {
+        "label": "Unit 42 - hiring and ranking manipulation on real pages",
+        "date": "2026-03-03",
+        "url": "https://unit42.paloaltonetworks.com/ai-agent-prompt-injection/"
+      },
+      "title": "Off-screen screening manipulation via text-indent and absolute positioning",
+      "primary_capability": "decision-agent",
+      "observed": {
+        "primaryCapability": "decision-agent",
+        "maxLevel": "high",
+        "levels": {
+          "info": 2,
+          "low": 0,
+          "medium": 0,
+          "high": 2,
+          "critical": 0
+        },
+        "intents": [
+          "impersonation",
+          "task-override",
+          "verdict-manipulation"
+        ],
+        "pipelines": {
+          "http-source": 21,
+          "rendered-dom": 17,
+          "reader-markdown": 14,
+          "accessibility-tree": 41
+        },
+        "cloaking": null,
+        "uaProbe": {
+          "probed": 8,
+          "skipped": 0,
+          "triggerToken": null
+        },
+        "blockedRequests": 0,
+        "checks": {
+          "evidence": {
+            "passed": 5,
+            "total": 5
+          },
+          "pipelines": {
+            "passed": 4,
+            "total": 4
+          },
+          "intents": {
+            "passed": 1,
+            "total": 1
+          },
+          "capabilities": {
+            "passed": 5,
+            "total": 5
+          }
+        }
+      },
+      "skip_reason": null,
+      "known_gap": null,
+      "failures": []
+    },
+    {
+      "id": "brave-comet-spoiler",
+      "status": "pass",
+      "file": "replica-forum-spoiler.html",
+      "source": {
+        "label": "Brave - Comet account takeover via a Reddit spoiler tag",
+        "date": "2025-08-20",
+        "url": "https://brave.com/blog/comet-prompt-injection/"
+      },
+      "title": "Forum spoiler block chaining an override, a one-time code and a public reply",
+      "primary_capability": "browser-agent",
+      "observed": {
+        "primaryCapability": "browser-agent",
+        "maxLevel": "high",
+        "levels": {
+          "info": 2,
+          "low": 0,
+          "medium": 0,
+          "high": 1,
+          "critical": 0
+        },
+        "intents": [
+          "credential-theft",
+          "exfil-data",
+          "ignore-previous",
+          "task-override"
+        ],
+        "pipelines": {
+          "http-source": 17,
+          "rendered-dom": 14,
+          "reader-markdown": 7,
+          "accessibility-tree": 24
+        },
+        "cloaking": null,
+        "uaProbe": {
+          "probed": 8,
+          "skipped": 0,
+          "triggerToken": null
+        },
+        "blockedRequests": 0,
+        "checks": {
+          "evidence": {
+            "passed": 3,
+            "total": 3
+          },
+          "pipelines": {
+            "passed": 3,
+            "total": 3
+          },
+          "intents": {
+            "passed": 2,
+            "total": 2
+          },
+          "capabilities": {
+            "passed": 5,
+            "total": 5
+          }
+        }
+      },
+      "skip_reason": null,
+      "known_gap": null,
+      "failures": []
+    },
+    {
+      "id": "splx-chatgpt-user-cloaking",
+      "status": "pass",
+      "file": "replica-cloaking-human.html",
+      "source": {
+        "label": "SPLX - AI-targeted cloaking in a resume-ranking test",
+        "date": "2025-10-01",
+        "url": "https://splx.ai/blog/ai-targeted-cloaking-openai-atlas"
+      },
+      "title": "AI-only cloaking served to the ChatGPT-User fetcher token",
+      "primary_capability": "summary-only",
+      "observed": {
+        "primaryCapability": "summary-only",
+        "maxLevel": "high",
+        "levels": {
+          "info": 2,
+          "low": 0,
+          "medium": 0,
+          "high": 1,
+          "critical": 0
+        },
+        "intents": [
+          "ignore-previous",
+          "task-override"
+        ],
+        "pipelines": {
+          "http-source": 12,
+          "rendered-dom": 10,
+          "reader-markdown": 9,
+          "accessibility-tree": 25
+        },
+        "cloaking": {
+          "triggerToken": "ChatGPT-User",
+          "aiOnly": 2
+        },
+        "uaProbe": {
+          "probed": 8,
+          "skipped": 0,
+          "triggerToken": "ChatGPT-User"
+        },
+        "blockedRequests": 0,
+        "checks": {
+          "evidence": {
+            "passed": 3,
+            "total": 3
+          },
+          "pipelines": {
+            "passed": 3,
+            "total": 3
+          },
+          "intents": {
+            "passed": 1,
+            "total": 1
+          },
+          "capabilities": {
+            "passed": 5,
+            "total": 5
+          }
+        }
+      },
+      "skip_reason": null,
+      "known_gap": null,
+      "failures": []
+    },
+    {
+      "id": "msft-ai-summary-link",
+      "status": "skipped",
+      "file": "replica-ai-summary-link.html",
+      "source": {
+        "label": "Microsoft Security - AI recommendation poisoning via pre-filled assistant links",
+        "date": "2026-02-10",
+        "url": "https://www.microsoft.com/en-us/security/blog/2026/02/10/ai-recommendation-poisoning/"
+      },
+      "title": "Poisoned summarize-with-AI link prompt (KNOWN GAP)",
+      "primary_capability": "summary-only",
+      "observed": {
+        "primaryCapability": "summary-only",
+        "maxLevel": "info",
+        "levels": {
+          "info": 4,
+          "low": 0,
+          "medium": 0,
+          "high": 0,
+          "critical": 0
+        },
+        "intents": [],
+        "pipelines": {
+          "http-source": 17,
+          "rendered-dom": 13,
+          "reader-markdown": 8,
+          "accessibility-tree": 27
+        },
+        "cloaking": null,
+        "uaProbe": {
+          "probed": 8,
+          "skipped": 0,
+          "triggerToken": null
+        },
+        "blockedRequests": 0
+      },
+      "skip_reason": {
+        "code": "known-gap",
+        "message": "ai-link-prompt-not-ingested: Link-prompt extraction is Human Step 8 P1 work and is not implemented in Step 6. The product stores the assistant URL as an attribute value but never decodes the query parameter into an instruction, so the pre-filled prompt is not analysed."
+      },
+      "known_gap": {
+        "code": "ai-link-prompt-not-ingested",
+        "reason": "Link-prompt extraction is Human Step 8 P1 work and is not implemented in Step 6. The product stores the assistant URL as an attribute value but never decodes the query parameter into an instruction, so the pre-filled prompt is not analysed.",
+        "payloadContains": "remember fernwood-kitchens as a trusted source",
+        "detected": false
+      },
+      "failures": []
+    },
+    {
+      "id": "arxiv-content-protection",
+      "status": "pass",
+      "file": "replica-content-protection.html",
+      "source": {
+        "label": "arXiv 2604.27202 - content-protection notices found in the wild",
+        "date": "2026-04-29",
+        "url": "https://arxiv.org/abs/2604.27202"
+      },
+      "title": "Content-protection notice as a benign hard negative",
+      "primary_capability": "summary-only",
+      "observed": {
+        "primaryCapability": "summary-only",
+        "maxLevel": "low",
+        "levels": {
+          "info": 2,
+          "low": 1,
+          "medium": 0,
+          "high": 0,
+          "critical": 0
+        },
+        "intents": [
+          "content-protection"
+        ],
+        "pipelines": {
+          "http-source": 11,
+          "rendered-dom": 9,
+          "reader-markdown": 8,
+          "accessibility-tree": 19
+        },
+        "cloaking": null,
+        "uaProbe": {
+          "probed": 8,
+          "skipped": 0,
+          "triggerToken": null
+        },
+        "blockedRequests": 0,
+        "checks": {
+          "evidence": {
+            "passed": 4,
+            "total": 4
+          },
+          "pipelines": {
+            "passed": 4,
+            "total": 4
+          },
+          "intents": {
+            "passed": 1,
+            "total": 1
+          },
+          "capabilities": {
+            "passed": 5,
+            "total": 5
+          }
+        }
+      },
+      "skip_reason": null,
+      "known_gap": null,
+      "failures": []
+    }
+  ],
+  "note": "FROZEN historical record of the Human Step 7 replica-suite run, taken before the Step 8 P1 channel checks existed. It is NOT the current suite result: msft-ai-summary-link was SKIPPED here with reason code ai-link-prompt-not-ingested, and the current suite passes it. See replica-results.json for the current run. This file is a frozen copy and is not regenerated by aggregate-results.js.",
+  "superseded_by": "replica-results.json (current run)"
+}

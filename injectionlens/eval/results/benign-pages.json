@@ -1,0 +1,16 @@
+{
+  "artifact": "benign-pages.json",
+  "step": "Human Step 7 — real benign-page evaluation",
+  "generated_at": "2026-09-19T21:23:04.641Z",
+  "state": "NOT_RUN",
+  "rate": null,
+  "numerator": null,
+  "denominator": null,
+  "reason": "NOT RUN: no explicit owner-approved URL/host allowlist was supplied for this stage. Ordinary real-world page scanning is not authorised, and the local fixtures are not real-world false-positive evidence.",
+  "what_would_be_needed": [
+    "an explicit allowlist of hosts the owner authorises for read-only analysis",
+    "a declared capability template and a declared benign/not-benign ground truth per page",
+    "network egress permission for those hosts only"
+  ],
+  "note": "A false-positive rate is deliberately NOT estimated here, because estimating it would require pages this stage may not fetch."
+}

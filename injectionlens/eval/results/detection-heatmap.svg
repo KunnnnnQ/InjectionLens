@@ -1,0 +1,124 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="722" height="612" viewBox="0 0 722 612" font-family="system-ui,Segoe UI,sans-serif">
+<rect width="722" height="612" fill="#0d1117"/>
+<text x="16" y="30" fill="#e6edf3" font-size="17" font-weight="600">InjectionLens Step 7 — detection heatmap (external attack library, PROVISIONAL)</text>
+<text x="16" y="52" fill="#8b949e" font-size="12">capability decision-agent · 50 records x 8 transforms x 8 placements · 3208 cells observed · levels: 808/3176 &gt;= medium</text>
+<text x="16" y="90" fill="#e6edf3" font-size="14" font-weight="600">Coverage — did the pipeline extract the planted text?</text>
+<text x="236" y="114" fill="#8b949e" font-size="11" text-anchor="middle">http-source</text>
+<text x="368" y="114" fill="#8b949e" font-size="11" text-anchor="middle">rendered-dom</text>
+<text x="500" y="114" fill="#8b949e" font-size="11" text-anchor="middle">reader-markdown</text>
+<text x="632" y="114" fill="#8b949e" font-size="11" text-anchor="middle">accessibility-tree</text>
+<text x="160" y="139" fill="#c9d1d9" font-size="11" text-anchor="end">p-css-hidden</text>
+<rect x="172" y="122" width="128" height="26" rx="4" fill="rgb(62,160,65)"/>
+<text x="236" y="139" fill="#0d1117" font-size="11" text-anchor="middle">1143/1200  95%</text>
+<rect x="304" y="122" width="128" height="26" rx="4" fill="rgb(46,160,67)"/>
+<text x="368" y="139" fill="#0d1117" font-size="11" text-anchor="middle">1200/1200  100%</text>
+<rect x="436" y="122" width="128" height="26" rx="4" fill="rgb(162,159,53)"/>
+<text x="500" y="139" fill="#0d1117" font-size="11" text-anchor="middle">786/1200  66%</text>
+<rect x="568" y="122" width="128" height="26" rx="4" fill="rgb(158,159,53)"/>
+<text x="632" y="139" fill="#0d1117" font-size="11" text-anchor="middle">800/1200  67%</text>
+<text x="160" y="169" fill="#c9d1d9" font-size="11" text-anchor="end">p-data-attribute</text>
+<rect x="172" y="152" width="128" height="26" rx="4" fill="rgb(62,160,65)"/>
+<text x="236" y="169" fill="#0d1117" font-size="11" text-anchor="middle">381/400  95%</text>
+<rect x="304" y="152" width="128" height="26" rx="4" fill="rgb(46,160,67)"/>
+<text x="368" y="169" fill="#0d1117" font-size="11" text-anchor="middle">400/400  100%</text>
+<rect x="436" y="152" width="128" height="26" rx="4" fill="rgb(58,63,70)"/>
+<text x="500" y="169" fill="#e6edf3" font-size="11" text-anchor="middle">0/400  0%</text>
+<rect x="568" y="152" width="128" height="26" rx="4" fill="rgb(58,63,70)"/>
+<text x="632" y="169" fill="#e6edf3" font-size="11" text-anchor="middle">0/400  0%</text>
+<text x="160" y="199" fill="#c9d1d9" font-size="11" text-anchor="end">p-html-comment</text>
+<rect x="172" y="182" width="128" height="26" rx="4" fill="rgb(59,160,65)"/>
+<text x="236" y="199" fill="#0d1117" font-size="11" text-anchor="middle">361/376  96%</text>
+<rect x="304" y="182" width="128" height="26" rx="4" fill="rgb(59,160,65)"/>
+<text x="368" y="199" fill="#0d1117" font-size="11" text-anchor="middle">361/376  96%</text>
+<rect x="436" y="182" width="128" height="26" rx="4" fill="rgb(58,63,70)"/>
+<text x="500" y="199" fill="#e6edf3" font-size="11" text-anchor="middle">0/376  0%</text>
+<rect x="568" y="182" width="128" height="26" rx="4" fill="rgb(58,63,70)"/>
+<text x="632" y="199" fill="#e6edf3" font-size="11" text-anchor="middle">0/376  0%</text>
+<text x="160" y="229" fill="#c9d1d9" font-size="11" text-anchor="end">p-jsonld-string</text>
+<rect x="172" y="212" width="128" height="26" rx="4" fill="rgb(62,160,65)"/>
+<text x="236" y="229" fill="#0d1117" font-size="11" text-anchor="middle">381/400  95%</text>
+<rect x="304" y="212" width="128" height="26" rx="4" fill="rgb(199,158,48)"/>
+<text x="368" y="229" fill="#0d1117" font-size="11" text-anchor="middle">218/400  55%</text>
+<rect x="436" y="212" width="128" height="26" rx="4" fill="rgb(58,63,70)"/>
+<text x="500" y="229" fill="#e6edf3" font-size="11" text-anchor="middle">0/400  0%</text>
+<rect x="568" y="212" width="128" height="26" rx="4" fill="rgb(58,63,70)"/>
+<text x="632" y="229" fill="#e6edf3" font-size="11" text-anchor="middle">0/400  0%</text>
+<text x="160" y="259" fill="#c9d1d9" font-size="11" text-anchor="end">p-meta-content</text>
+<rect x="172" y="242" width="128" height="26" rx="4" fill="rgb(62,160,65)"/>
+<text x="236" y="259" fill="#0d1117" font-size="11" text-anchor="middle">381/400  95%</text>
+<rect x="304" y="242" width="128" height="26" rx="4" fill="rgb(205,152,47)"/>
+<text x="368" y="259" fill="#0d1117" font-size="11" text-anchor="middle">188/400  47%</text>
+<rect x="436" y="242" width="128" height="26" rx="4" fill="rgb(58,63,70)"/>
+<text x="500" y="259" fill="#e6edf3" font-size="11" text-anchor="middle">0/400  0%</text>
+<rect x="568" y="242" width="128" height="26" rx="4" fill="rgb(58,63,70)"/>
+<text x="632" y="259" fill="#e6edf3" font-size="11" text-anchor="middle">0/400  0%</text>
+<text x="160" y="289" fill="#c9d1d9" font-size="11" text-anchor="end">p-visible-body</text>
+<rect x="172" y="272" width="128" height="26" rx="4" fill="rgb(85,160,62)"/>
+<text x="236" y="289" fill="#0d1117" font-size="11" text-anchor="middle">353/400  88%</text>
+<rect x="304" y="272" width="128" height="26" rx="4" fill="rgb(70,160,64)"/>
+<text x="368" y="289" fill="#0d1117" font-size="11" text-anchor="middle">372/400  93%</text>
+<rect x="436" y="272" width="128" height="26" rx="4" fill="rgb(68,160,64)"/>
+<text x="500" y="289" fill="#0d1117" font-size="11" text-anchor="middle">374/400  94%</text>
+<rect x="568" y="272" width="128" height="26" rx="4" fill="rgb(70,160,64)"/>
+<text x="632" y="289" fill="#0d1117" font-size="11" text-anchor="middle">372/400  93%</text>
+<text x="16" y="356" fill="#e6edf3" font-size="14" font-weight="600">Detection — attributable finding >= medium, denominator = cells that pipeline observed</text>
+<text x="236" y="380" fill="#8b949e" font-size="11" text-anchor="middle">http-source</text>
+<text x="368" y="380" fill="#8b949e" font-size="11" text-anchor="middle">rendered-dom</text>
+<text x="500" y="380" fill="#8b949e" font-size="11" text-anchor="middle">reader-markdown</text>
+<text x="632" y="380" fill="#8b949e" font-size="11" text-anchor="middle">accessibility-tree</text>
+<text x="160" y="405" fill="#c9d1d9" font-size="11" text-anchor="end">p-css-hidden</text>
+<rect x="172" y="388" width="128" height="26" rx="4" fill="rgb(141,113,57)"/>
+<text x="236" y="405" fill="#e6edf3" font-size="11" text-anchor="middle">303/1143  27%</text>
+<rect x="304" y="388" width="128" height="26" rx="4" fill="rgb(137,111,58)"/>
+<text x="368" y="405" fill="#e6edf3" font-size="11" text-anchor="middle">303/1200  25%</text>
+<rect x="436" y="388" width="128" height="26" rx="4" fill="rgb(138,112,58)"/>
+<text x="500" y="405" fill="#e6edf3" font-size="11" text-anchor="middle">202/786  26%</text>
+<rect x="568" y="388" width="128" height="26" rx="4" fill="rgb(137,111,58)"/>
+<text x="632" y="405" fill="#e6edf3" font-size="11" text-anchor="middle">202/800  25%</text>
+<text x="160" y="435" fill="#c9d1d9" font-size="11" text-anchor="end">p-data-attribute</text>
+<rect x="172" y="418" width="128" height="26" rx="4" fill="rgb(141,113,57)"/>
+<text x="236" y="435" fill="#e6edf3" font-size="11" text-anchor="middle">101/381  27%</text>
+<rect x="304" y="418" width="128" height="26" rx="4" fill="rgb(137,111,58)"/>
+<text x="368" y="435" fill="#e6edf3" font-size="11" text-anchor="middle">101/400  25%</text>
+<rect x="436" y="418" width="128" height="26" rx="4" fill="#3a3f46"/>
+<text x="500" y="435" fill="#e6edf3" font-size="11" text-anchor="middle">0/0</text>
+<rect x="568" y="418" width="128" height="26" rx="4" fill="#3a3f46"/>
+<text x="632" y="435" fill="#e6edf3" font-size="11" text-anchor="middle">0/0</text>
+<text x="160" y="465" fill="#c9d1d9" font-size="11" text-anchor="end">p-html-comment</text>
+<rect x="172" y="448" width="128" height="26" rx="4" fill="rgb(132,108,59)"/>
+<text x="236" y="465" fill="#e6edf3" font-size="11" text-anchor="middle">86/361  24%</text>
+<rect x="304" y="448" width="128" height="26" rx="4" fill="rgb(132,108,59)"/>
+<text x="368" y="465" fill="#e6edf3" font-size="11" text-anchor="middle">86/361  24%</text>
+<rect x="436" y="448" width="128" height="26" rx="4" fill="#3a3f46"/>
+<text x="500" y="465" fill="#e6edf3" font-size="11" text-anchor="middle">0/0</text>
+<rect x="568" y="448" width="128" height="26" rx="4" fill="#3a3f46"/>
+<text x="632" y="465" fill="#e6edf3" font-size="11" text-anchor="middle">0/0</text>
+<text x="160" y="495" fill="#c9d1d9" font-size="11" text-anchor="end">p-jsonld-string</text>
+<rect x="172" y="478" width="128" height="26" rx="4" fill="rgb(141,113,57)"/>
+<text x="236" y="495" fill="#e6edf3" font-size="11" text-anchor="middle">101/381  27%</text>
+<rect x="304" y="478" width="128" height="26" rx="4" fill="rgb(104,91,63)"/>
+<text x="368" y="495" fill="#e6edf3" font-size="11" text-anchor="middle">32/218  15%</text>
+<rect x="436" y="478" width="128" height="26" rx="4" fill="#3a3f46"/>
+<text x="500" y="495" fill="#e6edf3" font-size="11" text-anchor="middle">0/0</text>
+<rect x="568" y="478" width="128" height="26" rx="4" fill="#3a3f46"/>
+<text x="632" y="495" fill="#e6edf3" font-size="11" text-anchor="middle">0/0</text>
+<text x="160" y="525" fill="#c9d1d9" font-size="11" text-anchor="end">p-meta-content</text>
+<rect x="172" y="508" width="128" height="26" rx="4" fill="rgb(141,113,57)"/>
+<text x="236" y="525" fill="#e6edf3" font-size="11" text-anchor="middle">101/381  27%</text>
+<rect x="304" y="508" width="128" height="26" rx="4" fill="rgb(58,63,70)"/>
+<text x="368" y="525" fill="#e6edf3" font-size="11" text-anchor="middle">0/188  0%</text>
+<rect x="436" y="508" width="128" height="26" rx="4" fill="#3a3f46"/>
+<text x="500" y="525" fill="#e6edf3" font-size="11" text-anchor="middle">0/0</text>
+<rect x="568" y="508" width="128" height="26" rx="4" fill="#3a3f46"/>
+<text x="632" y="525" fill="#e6edf3" font-size="11" text-anchor="middle">0/0</text>
+<text x="160" y="555" fill="#c9d1d9" font-size="11" text-anchor="end">p-visible-body</text>
+<rect x="172" y="538" width="128" height="26" rx="4" fill="rgb(117,99,61)"/>
+<text x="236" y="555" fill="#e6edf3" font-size="11" text-anchor="middle">67/353  19%</text>
+<rect x="304" y="538" width="128" height="26" rx="4" fill="rgb(114,97,61)"/>
+<text x="368" y="555" fill="#e6edf3" font-size="11" text-anchor="middle">67/372  18%</text>
+<rect x="436" y="538" width="128" height="26" rx="4" fill="rgb(114,97,61)"/>
+<text x="500" y="555" fill="#e6edf3" font-size="11" text-anchor="middle">67/374  18%</text>
+<rect x="568" y="538" width="128" height="26" rx="4" fill="rgb(114,97,61)"/>
+<text x="632" y="555" fill="#e6edf3" font-size="11" text-anchor="middle">67/372  18%</text>
+<text x="16" y="596" fill="#8b949e" font-size="11">k = numerator, n = denominator. State OK only enters a denominator; FAILED, SKIPPED, NOT_RUN, PENDING and N/A cells stay out of every denominator. Grey cells mean no valid observation in that row.</text>
+</svg>

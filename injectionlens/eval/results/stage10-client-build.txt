@@ -1,0 +1,19 @@
+$ npm --prefix client run build
+(exit code: 0)
+(elapsed: 1.5s, captured 2026-09-19T21:24:56.703Z)
+
+
+> injectionlens-client@0.1.0 build
+> vite build
+
+vite v5.4.21 building for production...
+transforming...
+✓ 31 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   0.42 kB │ gzip:  0.29 kB
+dist/assets/index-XF1bR8iU.css    8.86 kB │ gzip:  2.25 kB
+dist/assets/index-4NJmeAqh.js   163.85 kB │ gzip: 52.53 kB
+✓ built in 652ms
+
+

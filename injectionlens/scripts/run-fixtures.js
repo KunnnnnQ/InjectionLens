@@ -511,13 +511,13 @@ async function runCase(spec, context) {
 
   // --- a declared known gap is checked, not believed ---------------------
   if (gap) {
-    // Both observation kinds count here: a gap becomes stale as soon as the text
-    // reaches ANY pipeline output, whether or not it became a finding.
-    const detected = runs.some((run) => [
-      ...run.observations.occurrences,
-      ...run.observations.pipelinePresence,
-    ].some((occurrence) => verdict.textContains(occurrence.originalText, gap.payloadContains)
-      || verdict.textContains(occurrence.normalizedText, gap.payloadContains)));
+    // Staleness is about DETECTION, not presence. Pipeline-presence evidence
+    // records that a pipeline read some text; it carries no intent and no level,
+    // so it cannot close a gap. A gap closes only when the payload reaches a
+    // FINDING occurrence, which is what "the detector now reads this" means.
+    const detected = runs.some((run) => run.observations.occurrences
+      .some((occurrence) => verdict.textContains(occurrence.originalText, gap.payloadContains)
+        || verdict.textContains(occurrence.normalizedText, gap.payloadContains)));
     record.knownGap.detected = detected;
     if (detected) {
       record.failures.push({

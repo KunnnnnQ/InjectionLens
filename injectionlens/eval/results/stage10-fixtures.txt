@@ -1,0 +1,24 @@
+$ node scripts/run-fixtures.js --no-json
+(exit code: 0)
+(elapsed: 42.8s, captured 2026-09-19T21:24:55.212Z)
+
+InjectionLens - Step 6 replica fixture runner
+manifest: C:\Users\kunqi\Kun\GitHub-Portfolio\00-INBOX\InjectionLens\injectionlens\server\fixtures\replicas.manifest.json (sha256 ff5cca1e42cf7e88...)
+fixtures root: C:\Users\kunqi\Kun\GitHub-Portfolio\00-INBOX\InjectionLens\injectionlens\server\fixtures
+fixture server: http://127.0.0.1:59454 (ephemeral, loopback only, closed=true)
+chrome: C:\Program Files\Google\Chrome\Application\chrome.exe
+external analysis: disabled (allowedHosts = [])
+
+PASS unit42-scam-ad-review [decision-agent] expected >=high observed=high evidence 5/5 intents 1/1 pipelines 3/3 5393ms
+PASS forcepoint-5000-payment [browser-agent] expected >=high observed=critical evidence 5/5 intents 1/1 pipelines 4/4 5222ms
+PASS forcepoint-rm-rf [coding-agent] expected >=critical observed=critical evidence 5/5 intents 1/1 pipelines 4/4 5278ms
+PASS unit42-offscreen-hiring [decision-agent] expected >=high observed=high evidence 5/5 intents 1/1 pipelines 4/4 5240ms
+PASS brave-comet-spoiler [browser-agent] expected >=high observed=high evidence 3/3 intents 2/2 pipelines 3/3 5121ms
+PASS splx-chatgpt-user-cloaking [summary-only] expected >=high observed=high evidence 3/3 intents 1/1 pipelines 3/3 5190ms
+PASS msft-ai-summary-link [summary-only] expected >=low observed=high evidence 1/1 intents 1/1 pipelines 1/1 5067ms
+PASS arxiv-content-protection [summary-only] expected <=low observed=low evidence 4/4 intents 1/1 pipelines 4/4 4745ms
+
+summary: total=8 pass=8 fail=0 skipped=0 error=0 (skipped excluding filtered-out: 0)
+SUMMARY {"total":8,"executed":8,"pass":8,"fail":0,"skipped":0,"error":0,"skippedExcludingFiltered":0,"bySkipCode":{}}
+
+

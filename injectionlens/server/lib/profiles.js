@@ -362,7 +362,22 @@ function buildRawProfile(html) {
     }));
   }
 
-  return { items };
+  // --- anchors: needed by the P1 AI-summary-link inspection ---------------
+  // An href is not page prose, so it is kept in its own channel instead of being
+  // pushed through the text extractors. Only the link text becomes an item.
+  const anchors = [];
+  doc.querySelectorAll('a[href]').forEach((el) => {
+    const href = (el.getAttribute('href') || '').trim();
+    if (!href) return;
+    anchors.push({
+      href,
+      text: normText(el.textContent || ''),
+      path: `${buildPath(el)}@href`,
+      inCodeOrQuote: !!el.closest('pre, code, blockquote, kbd, samp'),
+    });
+  });
+
+  return { items, anchors };
 }
 
 // ---------------------------------------------------------------------------

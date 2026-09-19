@@ -4,6 +4,7 @@ const { fetchHtml, renderPage, AI_CRAWLER_UAS, uaProbePermission } = require('./
 const { buildRawProfile, buildReaderProfile, normText } = require('./profiles');
 const { analyzeInstruction, assessSegment, CAPABILITY_TEMPLATES } = require('./risk');
 const { defaultPolicy } = require('./net-guard');
+const inspect = require('./inspect');
 
 const EXCERPT_LEN = 200;
 
@@ -377,6 +378,118 @@ async function analyze(url, capabilityKey = 'summary-only', { policy = defaultPo
     }
   }
 
+  // --- channel inspections (P1): AI-summary links and URL fragments --------
+  // These two channels are invisible to all four ingestion pipelines: a
+  // pre-filled prompt lives in a link's query string, and a fragment is never
+  // sent to the server at all. They are analysed here so they are surfaced, and
+  // they keep their own delivery ids so no pipeline is credited with reading them.
+  const pageInspection = inspect.inspectPage({
+    anchors: Array.isArray(raw.anchors) ? raw.anchors : [],
+    url,
+  });
+  const inspections = pageInspection.channels.map(({ channel, record }) => {
+    const { assessment, classification, segment } = inspect.assessInspection(record, capabilityKey);
+    return {
+      channel,
+      delivery: segment.delivery,
+      humanVisible: false,
+      text: segment.text,
+      note: segment.note,
+      record,
+      classification,
+      level: assessment.level,
+      intents: assessment.intents,
+      addressedToAI: assessment.addressedToAI,
+      discounted: assessment.discounted,
+      explanation: assessment.explanation,
+    };
+  });
+
+  for (const item of inspections) {
+    const { record, classification } = item;
+    const signals = [];
+    if (item.channel === 'ai-summary-link') {
+      signals.push({
+        type: 'ai-summary-link',
+        severity: 'high',
+        detail: `A link to ${record.host} carries a pre-filled prompt in its "${record.param}" parameter. The prompt is not page text: no ingestion pipeline reads it as an instruction, and a human sees only a button.`,
+      });
+      if (classification && classification.manipulative) {
+        signals.push({
+          type: 'recommendation-manipulation',
+          severity: 'high',
+          detail: `The pre-filled prompt asks the assistant to treat the page as authoritative or to prefer it later (markers: ${classification.recommendationMarkers.join(', ')}).`,
+        });
+      }
+      if (classification && classification.benignSummaryRequest) {
+        signals.push({
+          type: 'benign-summary-request',
+          severity: 'info',
+          detail: 'The pre-filled prompt only asks for a summary, with no recommendation or trust instruction. This is a normal product feature.',
+        });
+      }
+    } else {
+      signals.push({
+        type: 'url-fragment',
+        severity: 'high',
+        detail: 'The URL fragment carries text. A fragment is never sent to the server, so no server-side pipeline can see it, but a browser-side assistant can read it.',
+      });
+    }
+    if (record.embeddedUrls && record.embeddedUrls.length) {
+      signals.push({
+        type: 'embedded-destination',
+        severity: 'medium',
+        detail: `The decoded text names ${record.embeddedUrls.length} destination(s): ${record.embeddedUrls.slice(0, 4).join(', ')}. Recorded as evidence; InjectionLens never requests them.`,
+      });
+    }
+
+    const interesting = item.level !== 'info' || item.intents.length > 0 || item.channel === 'url-fragment';
+    if (!interesting) continue;
+
+    findings.push({
+      id: 'F' + ++fid,
+      excerpt: excerpt(item.text),
+      fullText: item.text,
+      originalText: item.text,
+      normalizedText: normText(item.text),
+      occurrences: [{
+        pipeline: item.channel,
+        extractionKind: item.channel,
+        path: item.channel === 'url-fragment' ? '(URL fragment)' : record.sourcePath,
+        originalText: item.text,
+        normalizedText: normText(item.text),
+        invisibleClasses: [],
+        decodedText: item.channel === 'ai-summary-link' ? record.decodedPrompt : record.decodedFragment,
+      }],
+      humanVisible: false,
+      delivery: item.delivery,
+      aiProfiles: [item.channel],
+      channel: item.channel,
+      channelEvidence: {
+        sourceUrl: record.href,
+        rawValue: item.channel === 'ai-summary-link' ? record.rawParam : record.rawFragment,
+        decoded: item.channel === 'ai-summary-link' ? record.decodedPrompt : record.decodedFragment,
+        host: record.host || null,
+        param: record.param || null,
+        nestedParams: record.nestedParams || null,
+        linkText: record.linkText || null,
+        embeddedUrls: record.embeddedUrls || [],
+        sentToServer: item.channel === 'url-fragment' ? false : null,
+      },
+      classification: item.classification,
+      signals,
+      instruction: item.intents.length ? item.intents[0] : null,
+      instructionTypes: item.intents,
+      intents: item.intents,
+      addressedToAI: item.addressedToAI,
+      discounted: item.discounted,
+      evidenceTier: 3,
+      quotedContext: item.discounted,
+      impact: { level: item.level, explanation: item.explanation },
+      nodeRef: null,
+    });
+  }
+
   const order = { critical: 0, high: 1, medium: 2, low: 3, info: 4 };
   findings.sort((a, b) => order[a.impact.level] - order[b.impact.level]);
 
@@ -424,10 +537,13 @@ async function analyze(url, capabilityKey = 'summary-only', { policy = defaultPo
       a11yNodes: a11y.length,
       cloakingDetected: !!cloak,
       blockedSubrequests: policy.blockedRequests.length,
+      assistantLinks: pageInspection.aiSummaryLinks.length,
+      fragmentInspected: !!pageInspection.fragment,
     },
     cloak,
     uaProbe,
     blockedRequests: policy.blockedRequests.slice(),
+    inspections,
     findings,
     levelCount,
     matrix,

@@ -21,13 +21,66 @@ const SIGNAL_LABEL = {
   'ua-cloaking': 'UA cloaking detected',
   'decoded-invisible-text': 'Decoded invisible text',
   'addressed-to-ai': 'Addressed to AI',
+  'near-invisible': 'Near-invisible to humans',
+  'attribute-value': 'Attribute value',
+  'data-attribute': 'data-* attribute',
+  'document-title': 'Document title',
+  'inert-template': 'Inert <template>',
+  'noscript-content': '<noscript> content',
+  'invisible-unicode': 'Invisible Unicode',
+  'jsonld': 'JSON-LD string',
+  'ai-summary-link': 'AI-summary link',
+  'recommendation-manipulation': 'Recommendation manipulation',
+  'benign-summary-request': 'Benign summary request',
+  'url-fragment': 'URL fragment',
+  'embedded-destination': 'Named destination (not contacted)',
+}
+
+const DELIVERY_LABEL = {
+  visible: 'visible page text',
+  'css-hidden': 'CSS-hidden element',
+  'near-invisible': 'near-invisible text (1px / low opacity)',
+  comment: 'HTML comment',
+  attribute: 'HTML attribute',
+  meta: 'meta tag',
+  jsonld: 'JSON-LD structured data',
+  'ai-only': 'served only to an AI crawler User-Agent',
+  'ai-link-prompt': 'pre-filled prompt in a link query string',
+  'url-fragment': 'URL fragment (never sent to the server)',
+}
+
+// The four ingestion pipelines, in the order the report reads them. A pipeline
+// that did not observe an instruction is reported as "no instruction observed",
+// never as "safe".
+const PIPELINES = [
+  { id: 'http-source', label: 'HTTP source', stat: 'httpSourceItems' },
+  { id: 'rendered-dom', label: 'Rendered DOM', stat: 'renderedItems' },
+  { id: 'reader-markdown', label: 'Reader/Markdown', stat: 'readerSegments' },
+  { id: 'accessibility-tree', label: 'Accessibility tree', stat: 'a11yNodes' },
+]
+
+const LEVEL_RANK = { info: 0, low: 1, medium: 2, high: 3, critical: 4 }
+
+function highestLevel(levelCount) {
+  let best = 'info'
+  for (const level of Object.keys(LEVEL_RANK)) {
+    if ((levelCount?.[level] || 0) > 0) best = level
+  }
+  return best
+}
+
+/** The empty demo scenario: the local scam-ad-review replica under decision-agent. */
+const DEMO = {
+  target: '/fixtures/replica-scam-ad-review.html',
+  capability: 'decision-agent',
+  label: 'Unit 42 scam-ad review page, seen by a decision agent',
 }
 
 export default function App() {
   const [fixtures, setFixtures] = useState([])
   const [capabilities, setCapabilities] = useState([])
-  const [target, setTarget] = useState('/fixtures/attack-hidden-displaynone.html')
-  const [capability, setCapability] = useState('summary-only')
+  const [target, setTarget] = useState(DEMO.target)
+  const [capability, setCapability] = useState(DEMO.capability)
   const [result, setResult] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
@@ -39,13 +92,15 @@ export default function App() {
     fetch('/api/capabilities').then((r) => r.json()).then((d) => setCapabilities(d || [])).catch(() => {})
   }, [])
 
-  const analyze = async () => {
+  const analyze = async (override) => {
+    const nextTarget = (override && override.target) || target
+    const nextCapability = (override && override.capability) || capability
     setLoading(true); setError(null); setResult(null); setSelected(null)
     try {
       const r = await fetch('/api/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: target, capability }),
+        body: JSON.stringify({ url: nextTarget, capability: nextCapability }),
       })
       const data = await r.json()
       if (!r.ok) {
@@ -54,6 +109,7 @@ export default function App() {
         throw Object.assign(new Error(data.error || 'analysis failed'), { kind, code: data.code })
       }
       setResult(data)
+      setCapability(nextCapability)
       if (data.findings.length) setSelected(data.findings[0].id)
     } catch (e) {
       setError({ kind: e.kind || 'failure', message: String(e.message || e), code: e.code || null })
@@ -62,10 +118,45 @@ export default function App() {
     }
   }
 
+  // Capability switching re-runs the real analysis. Nothing here is a canned
+  // result: the levels, intents and explanations all come from the API.
+  const switchCapability = (key) => {
+    if (key === capability && result) return
+    analyze({ capability: key })
+  }
+
+  const runDemo = () => {
+    setTarget(DEMO.target)
+    analyze({ target: DEMO.target, capability: DEMO.capability })
+  }
+
   const selFinding = useMemo(
     () => result?.findings.find((f) => f.id === selected) || null,
     [result, selected]
   )
+
+  const observedPipelines = useMemo(() => {
+    if (!result) return {}
+    const observed = {}
+    for (const pipeline of PIPELINES) observed[pipeline.id] = { items: 0, findings: 0 }
+    for (const row of result.matrix || []) {
+      if (row.httpSource) observed['http-source'].items += 1
+      if (row.renderedDom && row.renderedDom !== 'absent') observed['rendered-dom'].items += 1
+      if (row.readerMarkdown) observed['reader-markdown'].items += 1
+      if (row.accessibilityTree) observed['accessibility-tree'].items += 1
+    }
+    for (const finding of result.findings || []) {
+      for (const profile of finding.aiProfiles || []) {
+        if (observed[profile]) observed[profile].findings += 1
+      }
+    }
+    // Channel inspections are not ingestion pipelines; they are reported apart.
+    for (const item of result.inspections || []) {
+      observed[item.channel] = observed[item.channel] || { items: 0, findings: 0 }
+      observed[item.channel].findings += 1
+    }
+    return observed
+  }, [result])
 
   return (
     <div className="app">
@@ -78,6 +169,15 @@ export default function App() {
       </header>
 
       <section className="controls card">
+        <div className="row demo-row">
+          <button className="demo" onClick={runDemo} disabled={loading}>
+            ▶ Run the demo
+          </button>
+          <span className="demo-hint">
+            One click: <b>{DEMO.label}</b> ({DEMO.target.replace('/fixtures/', '')}, capability <code>{DEMO.capability}</code>).
+            No URL to type. Every number below comes from this live analysis.
+          </span>
+        </div>
         <div className="row">
           <label>Target page</label>
           <select value={target} onChange={(e) => setTarget(e.target.value)}>
@@ -101,16 +201,23 @@ export default function App() {
                 key={c.key}
                 className={'cap' + (capability === c.key ? ' active' : '')}
                 title={c.blurb}
-                onClick={() => setCapability(c.key)}
+                onClick={() => switchCapability(c.key)}
+                disabled={loading}
               >
                 {c.label}
               </button>
             ))}
           </div>
-          <button className="analyze" onClick={analyze} disabled={loading}>
+          <button className="analyze" onClick={() => analyze()} disabled={loading}>
             {loading ? 'Analyzing 4 pipelines…' : '▶ Analyze'}
           </button>
         </div>
+        {loading && (
+          <div className="loading" role="status">
+            <span className="spinner" aria-hidden="true" /> Reading the page through four ingestion pipelines
+            and probing the configured AI-agent User-Agents…
+          </div>
+        )}
         {error && (
           <div className={'error ' + (error.kind === 'blocked' ? 'blocked' : 'failed')}>
             <b>{error.kind === 'blocked' ? '⛔ Blocked — nothing was analysed.' : '⚠ Analysis failed — the result below would be incomplete, so none is shown.'}</b>
@@ -131,6 +238,115 @@ export default function App() {
 
       {result && (
         <>
+          {/* ---------- the five questions, answered at a glance ---------- */}
+          <section className="verdict card">
+            <div className="verdict-main">
+              <span className="verdict-badge" style={{ background: LEVEL_COLOR[highestLevel(result.levelCount)] }}>
+                {highestLevel(result.levelCount)}
+              </span>
+              <div>
+                <b className="verdict-title">Highest risk level on this page</b>
+                <div className="muted small">
+                  rule-based tier from the intent and the selected capability — not a measured probability
+                </div>
+              </div>
+              <div className="verdict-stats">
+                <div className="stat"><b>{result.findings.length}</b><span>findings</span></div>
+                <div className="stat"><b>{[...new Set((result.findings || []).flatMap((f) => f.intents || []))].length}</b><span>intents</span></div>
+                <div className="stat"><b>{result.capability}</b><span>capability</span></div>
+                <div className="stat"><b>{result.levelCount.high + result.levelCount.critical}</b><span>high or above</span></div>
+              </div>
+            </div>
+            <div className="verdict-grid">
+              <div>
+                <span className="field-label">What was detected</span>
+                <div className="chips">
+                  {[...new Set((result.findings || []).flatMap((f) => f.intents || []))].map((intent) => (
+                    <span key={intent} className="intent-chip">{intent}</span>
+                  ))}
+                  {result.findings.length === 0 && <span className="muted">nothing instruction-like</span>}
+                </div>
+              </div>
+              <div>
+                <span className="field-label">Where it was found</span>
+                <div className="chips">
+                  {[...new Set((result.findings || []).filter((f) => !f.channel).map((f) => f.delivery))].map((delivery) => (
+                    <span key={delivery} className="meta-chip">{DELIVERY_LABEL[delivery] || delivery}</span>
+                  ))}
+                  {[...new Set((result.inspections || []).map((item) => item.delivery))].map((delivery) => (
+                    <span key={delivery} className="meta-chip">{DELIVERY_LABEL[delivery] || delivery}</span>
+                  ))}
+                </div>
+              </div>
+              <div className="span-2">
+                <span className="field-label">Which ingestion pipelines observed it</span>
+                <div className="pipeline-grid">
+                  {PIPELINES.map((pipeline) => {
+                    const seen = observedPipelines[pipeline.id] || { items: 0, findings: 0 }
+                    const count = result.stats[pipeline.stat] || 0
+                    return (
+                      <div key={pipeline.id} className={'pipeline-cell' + (seen.findings > 0 ? ' hit' : '')}>
+                        <b>{pipeline.label}</b>
+                        <span>{count} item{count === 1 ? '' : 's'} read</span>
+                        <span className={seen.findings > 0 ? 'v-no' : 'muted'}>
+                          {seen.findings > 0
+                            ? `${seen.findings} instruction finding(s)`
+                            : 'no instruction observed'}
+                        </span>
+                      </div>
+                    )
+                  })}
+                </div>
+                <p className="muted small">
+                  "No instruction observed" means this pipeline did not surface an instruction in this run.
+                  It is <b>not</b> a statement that the pipeline is safe — a pipeline can miss text it did read.
+                </p>
+              </div>
+              {((result.inspections || []).length > 0 || result.stats.assistantLinks > 0) && (
+                <div className="span-2">
+                  <span className="field-label">Channel checks (not ingestion pipelines)</span>
+                  {(result.inspections || []).map((item, index) => (
+                    <div key={`${item.channel}-${index}`} className="channel-row">
+                      <span className="intent-chip">{item.channel}</span>
+                      <span className={`badge mini`} style={{ background: LEVEL_COLOR[item.level] }}>{item.level}</span>
+                      <span className="channel-text">{item.text}</span>
+                      {item.classification?.benignSummaryRequest && (
+                        <span className="meta-chip">classified benign: plain summary request</span>
+                      )}
+                      {item.classification?.manipulative && (
+                        <span className="meta-chip">manipulation markers: {item.classification.recommendationMarkers.join(', ')}</span>
+                      )}
+                    </div>
+                  ))}
+                  {(result.inspections || []).length === 0 && (
+                    <p className="muted small">
+                      {result.stats.assistantLinks} assistant link(s) found, none carrying a pre-filled prompt;
+                      no URL fragment on this target.
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          </section>
+
+          <section className="summary card">
+            <div className="stat"><b>{result.pageTitle || '(untitled)'}</b><span>{result.url}</span></div>
+            <div className="chips">
+              {Object.entries(result.levelCount).map(([lv, n]) => (
+                <span key={lv} className="chip" style={{ borderColor: LEVEL_COLOR[lv], color: LEVEL_COLOR[lv] }}>
+                  {lv} {n}
+                </span>
+              ))}
+            </div>
+            <div className="stat small">
+              <span>HTTP source: {result.stats.httpSourceItems} segments</span>
+              <span>Rendered DOM: {result.stats.renderedItems}</span>
+              <span>Reader/Markdown: {result.stats.readerSegments}</span>
+              <span>A11y tree: {result.stats.a11yNodes} nodes</span>
+              <span>{result.elapsedMs} ms</span>
+            </div>
+          </section>
+
           {/* A partial pipeline is stated plainly: missing evidence is not the same as no risk. */}
           {(result.stats.renderedItems === 0 || result.stats.a11yNodes === 0) && (
             <div className="partial-banner">
@@ -169,24 +385,6 @@ export default function App() {
             </div>
           )}
 
-          <section className="summary card">
-            <div className="stat"><b>{result.pageTitle || '(untitled)'}</b><span>{result.url}</span></div>
-            <div className="chips">
-              {Object.entries(result.levelCount).map(([lv, n]) => (
-                <span key={lv} className="chip" style={{ borderColor: LEVEL_COLOR[lv], color: LEVEL_COLOR[lv] }}>
-                  {lv} {n}
-                </span>
-              ))}
-            </div>
-            <div className="stat small">
-              <span>HTTP source: {result.stats.httpSourceItems} segments</span>
-              <span>Rendered DOM: {result.stats.renderedItems}</span>
-              <span>Reader/Markdown: {result.stats.readerSegments}</span>
-              <span>A11y tree: {result.stats.a11yNodes} nodes</span>
-              <span>{result.elapsedMs} ms</span>
-            </div>
-          </section>
-
           <main className="grid">
             <section className="findings card">
               <h2>Findings ({result.findings.length})</h2>
@@ -214,15 +412,71 @@ export default function App() {
                     </div>
                   )}
                   <div className="ai-profiles">
-                    ingested by: {f.aiProfiles.map((p) => <code key={p}>{p}</code>)}
+                    observed by: {f.aiProfiles.map((p) => <code key={p}>{p}</code>)}
+                    {f.delivery && <span className="delivery"> via {DELIVERY_LABEL[f.delivery] || f.delivery}</span>}
                   </div>
+                  {selected === f.id && (
+                    <div className="evidence">
+                      <div className="evidence-row">
+                        <span className="field-label">Original instruction evidence</span>
+                        <pre className="evidence-pre">{f.originalText || f.fullText || f.excerpt}</pre>
+                      </div>
+                      {f.normalizedText && f.normalizedText !== (f.originalText || f.fullText) && (
+                        <div className="evidence-row">
+                          <span className="field-label">Normalized comparison form</span>
+                          <pre className="evidence-pre">{f.normalizedText}</pre>
+                        </div>
+                      )}
+                      {(f.occurrences || []).some((o) => o.decodedText) && (
+                        <div className="evidence-row">
+                          <span className="field-label">Decoded from an invisible channel</span>
+                          <pre className="evidence-pre">
+                            {(f.occurrences || []).map((o) => o.decodedText).filter(Boolean).join('\n')}
+                          </pre>
+                        </div>
+                      )}
+                      {f.channelEvidence && (
+                        <div className="evidence-row">
+                          <span className="field-label">
+                            {f.channel === 'url-fragment' ? 'URL fragment' : 'Assistant link'} evidence
+                          </span>
+                          <pre className="evidence-pre">{[
+                            `source URL : ${f.channelEvidence.sourceUrl}`,
+                            f.channelEvidence.host ? `host       : ${f.channelEvidence.host}` : null,
+                            f.channelEvidence.param ? `parameter  : ${f.channelEvidence.param}` : null,
+                            f.channelEvidence.rawValue ? `raw value  : ${f.channelEvidence.rawValue}` : null,
+                            `decoded    : ${f.channelEvidence.decoded}`,
+                            f.channelEvidence.nestedParams ? `nested     : ${JSON.stringify(f.channelEvidence.nestedParams)}` : null,
+                            f.channelEvidence.sentToServer === false ? 'sent to server: no (a fragment never is)' : null,
+                            f.channelEvidence.embeddedUrls?.length
+                              ? `names      : ${f.channelEvidence.embeddedUrls.join(', ')} (recorded, never requested)`
+                              : null,
+                          ].filter(Boolean).join('\n')}</pre>
+                        </div>
+                      )}
+                      <div className="evidence-row">
+                        <span className="field-label">Where the pipelines saw it</span>
+                        <ul className="occurrence-list">
+                          {(f.occurrences || []).map((o, i) => (
+                            <li key={i}>
+                              <code>{o.pipeline}</code>
+                              <span className="muted"> / {o.extractionKind}{o.path ? ` / ${o.path}` : ''}</span>
+                            </li>
+                          ))}
+                          {(f.occurrences || []).length === 0 && <li className="muted">no per-pipeline occurrence recorded</li>}
+                        </ul>
+                      </div>
+                    </div>
+                  )}
                   <ul className="signals">
                     {f.signals.map((s, i) => (
                       <li key={i}><b>[{SIGNAL_LABEL[s.type] || s.type}]</b> {s.detail}</li>
                     ))}
                   </ul>
                   {selected === f.id && (
-                    <p className="impact"><b>Impact under “{result.capabilityLabel}”:</b> {f.impact.explanation}</p>
+                    <p className="impact">
+                      <b>Why this level under “{result.capabilityLabel}”:</b> {f.impact.explanation}
+                    </p>
                   )}
                 </article>
               ))}
@@ -280,10 +534,19 @@ export default function App() {
         link-local and cloud-metadata addresses are always refused. Crawler-User-Agent probing has a narrower,
         separate permission boundary and never runs against third-party hosts.
         <br />
+        Channel checks (P1): a "summarize with AI" link's pre-filled prompt and a URL fragment are decoded and
+        analysed locally. InjectionLens never opens, submits to, or follows an assistant link, and it never
+        requests a destination named inside a decoded prompt.
+        <br />
         Hidden content is <b>surfaced, not judged</b>: invisible or near-invisible text is reported as evidence,
         not as proof of malice. The UA probe is only a <b>lower bound</b> — cloaking driven by behavioural
         fingerprinting is not detected, screenshot/OCR agents are not covered, and DNS rebinding is not fully
         solved because the validated address is not pinned to the final connection.
+        <br />
+        Timed snapshots and behavioural-fingerprint cloaking are <b>not implemented</b>; the UA probe is a lower
+        bound only. Real-world benign-page false-positive rate: <b>NOT RUN</b> (no approved host list).
+        Detection rates are measured on the external attack library and reported as numerators and denominators,
+        never as a single accuracy figure.
         <br />
         InjectionLens reduces and surfaces risk — no scanner can “solve” prompt injection.
       </footer>
